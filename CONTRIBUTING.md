@@ -21,9 +21,11 @@ than the size of this codebase suggests.
    change.
 4. **All gates pass.** See below. A red gate is not advisory — fix it, or make
    the argument that the rule is wrong and change the rule in the same PR.
-5. A maintainer from `@Widenode/developers` merges. Merging needs write access,
-   so an outside contribution always passes through one. CI on fork PRs runs
-   with a read-only token and no secrets, by design.
+5. A maintainer merges. Merging needs write access, which only the
+   `@Widenode/developers` team has, so an outside contribution always passes
+   through one of them. CI on fork PRs runs with a read-only token and no
+   secrets, by design, and a maintainer must approve the workflow run before it
+   executes at all.
 
 `main` is protected by a ruleset with **no bypass actors** — it applies to org
 admins too. What that enforces:
@@ -35,10 +37,16 @@ admins too. What that enforces:
 | Conversations must be resolved | No merging over an open thread |
 | No force-push, no deletion | `main` history is append-only |
 
-There is **no required approval count**, deliberately. On a package this size a
-second pair of eyes is usually a rubber stamp, whereas the gate suite genuinely
-cannot be talked round: four checks, none of them bypassable by anyone. If you
-want review on a change, ask for it — the tooling won't force the ceremony.
+There is **no required approval count** and **no CODEOWNERS file**, deliberately.
+On a package this size a mandatory second pair of eyes is usually a rubber
+stamp, whereas the gate suite genuinely cannot be talked round: four checks,
+none of them bypassable by anyone.
+
+Authorisation is write access, nothing more. CODEOWNERS was removed because it
+auto-requests review from everyone it names on *every* PR — including the
+maintainer's own routine changes — which trains a team to ignore review requests
+rather than read them. If you want review on a change, request it explicitly;
+the tooling will not manufacture the ceremony for you.
 
 ## Gates
 

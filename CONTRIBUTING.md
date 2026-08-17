@@ -27,13 +27,13 @@ than the size of this codebase suggests.
 ## Gates
 
 ```bash
-npm run lint && npm run test:a11y && npm run test:visual
+npm run verify
 ```
 
 | Gate | What it catches |
 |---|---|
 | `lint:css` | stylelint: raw hex, non-token colour values, Tier 1 primitives outside the files allowed to define them |
-| `lint:tokens` | `scripts/check-tokens.sh` — the text-level backstop. Catches arbitrary Tailwind values and Tier 1 references inside template strings, which an AST linter cannot see |
+| `lint:tokens` | `scripts/check-tokens.mjs` — the text-level backstop. Catches arbitrary Tailwind values and Tier 1 references inside template strings, which an AST linter cannot see |
 | `test:a11y` | axe-core over the specimen in both themes: contrast, target size, ARIA, focus order |
 | `test:contrast` | `src/contrast-policy.json` asserted pair by pair, in both themes |
 | `test:visual` | Screenshot diff of the specimen at 390px and 1280px, both themes |
@@ -153,12 +153,28 @@ adapter is a stylesheet that assigns custom-property names, not an integration.
 ## Local setup
 
 ```bash
-npm ci && npx playwright install --with-deps chromium
+npm ci
 ```
+
+```bash
+npx playwright install chromium
+```
+
+`--with-deps` is Linux-only; on Windows or macOS it will fail. Every gate runs
+on all three platforms — `lint:tokens` is Node rather than a shell script
+precisely so a plain Windows console can run it.
 
 There is no build step, and this package must never acquire one. To view the
 specimen, open `specimen/index.html` from a static server (the Playwright
 config starts one on port 4173).
+
+The first `npm run test:visual` on Windows or macOS will fail: only Linux
+baselines are committed. Generate your own platform's set once — they are
+gitignored and cannot pollute the repo:
+
+```bash
+npm run test:visual:update
+```
 
 ## Troubleshooting
 
@@ -173,4 +189,9 @@ config starts one on port 4173).
 
 Maintainers only. Publishing happens from GitHub Actions on a `v*` tag via npm
 trusted publishing (OIDC). There is no `NPM_TOKEN` secret and there must never
-be one. Never publish from a local machine.
+be one.
+
+Never publish from a local machine — with exactly one exception, already spent:
+npm's trusted-publisher configuration lives on the package's settings page, so
+the package has to exist before OIDC can be set up. Every release after the
+first goes through a tag.

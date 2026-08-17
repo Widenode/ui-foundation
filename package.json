@@ -43,7 +43,7 @@
     "./adapters/nuxt-ui.css": "./src/adapters/nuxt-ui.css",
     "./contrast-policy.json": "./src/contrast-policy.json",
     "./stylelint": "./stylelint/index.json",
-    "./scripts/check-tokens.sh": "./scripts/check-tokens.sh",
+    "./scripts/check-tokens.mjs": "./scripts/check-tokens.mjs",
     "./RULES.md": "./RULES.md",
     "./package.json": "./package.json"
   },
@@ -63,7 +63,7 @@
   "scripts": {
     "lint": "npm run lint:css && npm run lint:tokens",
     "lint:css": "stylelint \"src/**/*.css\" \"specimen/**/*.html\"",
-    "lint:tokens": "bash scripts/check-tokens.sh src",
+    "lint:tokens": "node scripts/check-tokens.mjs src",
     "test:a11y": "playwright test tests/a11y.spec.ts",
     "test:contrast": "playwright test tests/contrast.spec.ts",
     "test:visual": "playwright test tests/visual.spec.ts",

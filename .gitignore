@@ -7,3 +7,9 @@ test-results/
 playwright-report/
 
 # Baselines under tests/**/__screenshots__ ARE committed. Do not ignore them.
+#
+# ...but only the Linux ones, because that is what CI compares against. Running
+# test:visual on Windows or macOS makes Playwright write a whole parallel set
+# with its own platform suffix; those are local scratch, never the reference.
+tests/__screenshots__/*-win32.png
+tests/__screenshots__/*-darwin.png

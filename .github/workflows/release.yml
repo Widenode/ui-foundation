@@ -1,0 +1,70 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+# OIDC trusted publishing. `id-token: write` lets the runner mint a short-lived,
+# workflow-scoped OIDC token that npm exchanges for publish rights.
+#
+# There is no NPM_TOKEN secret in this repository and there must never be one —
+# a long-lived token is the thing trusted publishing exists to remove.
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish:
+    name: npm publish
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    # `npm publish` runs `prepack`, which runs the full `verify` — lint, a11y
+    # AND test:visual. Screenshot baselines are environment-specific, so this
+    # job pins the exact image the baselines must be generated in. Keep this tag
+    # in lockstep with the @playwright/test version in package.json.
+    container: mcr.microsoft.com/playwright:v1.62.1-noble
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+
+      # Trusted publishing needs npm >= 11.5.1 and Node >= 22.14.0. The npm
+      # bundled with Node 22 is older than that, so upgrade explicitly.
+      - name: Upgrade npm for OIDC support
+        run: |
+          npm install -g npm@latest
+          node --version
+          npm --version
+
+      - run: npm ci
+
+      # A v1.2.3 tag must not publish a package.json that says 1.2.2.
+      - name: Tag must match package.json version
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          PKG="$(node -p "require('./package.json').version")"
+          if [ "$TAG" != "$PKG" ]; then
+            echo "Tag $GITHUB_REF_NAME does not match package.json version $PKG" >&2
+            exit 1
+          fi
+          echo "Publishing $PKG"
+
+      # The file-list check from CLAUDE.md, visible in the run log.
+      # --ignore-scripts here only so `prepack` runs once, at publish time.
+      - name: Show tarball contents
+        run: npm pack --dry-run --ignore-scripts
+
+      # No --provenance flag: with trusted publishing npm generates and
+      # publishes provenance attestations by default.
+      # No NODE_AUTH_TOKEN: the npm CLI detects the OIDC environment and
+      # authenticates with it before falling back to token auth.
+      - name: Publish
+        run: npm publish

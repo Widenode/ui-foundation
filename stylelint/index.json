@@ -1,0 +1,65 @@
+{
+  "extends": ["stylelint-config-standard"],
+  "plugins": ["stylelint-declaration-strict-value"],
+  "rules": {
+    "color-no-hex": true,
+    "at-rule-no-unknown": [
+      true,
+      {
+        "ignoreAtRules": [
+          "theme", "source", "utility", "variant", "custom-variant",
+          "apply", "reference", "config", "plugin"
+        ]
+      }
+    ],
+    "selector-class-pattern": [
+      "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*(?:__[a-z][a-z0-9]*(?:-[a-z0-9]+)*)?(?:--[a-z][a-z0-9]*(?:-[a-z0-9]+)*)?$",
+      {
+        "message": "Expected class selector to be kebab-case, optionally with a BEM __element and/or --modifier."
+      }
+    ],
+    "property-no-vendor-prefix": [
+      true,
+      { "ignoreProperties": ["text-size-adjust"] }
+    ],
+    "scale-unlimited/declaration-strict-value": [
+      [
+        "/color$/", "fill", "stroke", "background", "background-color",
+        "border-color", "border-top-color", "border-right-color",
+        "border-bottom-color", "border-left-color", "outline-color",
+        "box-shadow"
+      ],
+      {
+        "ignoreValues": [
+          "transparent", "currentColor", "currentcolor", "inherit",
+          "initial", "unset", "none", "revert"
+        ],
+        "disableFix": true,
+        "message": "Use a Tier 2 semantic token, e.g. var(--surface-base)."
+      }
+    ],
+    "declaration-property-value-disallowed-list": {
+      "/.*/": ["/var\\(\\s*--[na]-\\d/"],
+      "gap": ["/var\\(\\s*--space-/"],
+      "row-gap": ["/var\\(\\s*--space-/"],
+      "column-gap": ["/var\\(\\s*--space-/"],
+      "margin-top": ["/var\\(\\s*--space-/"],
+      "margin-bottom": ["/var\\(\\s*--space-/"]
+    }
+  },
+  "overrides": [
+    {
+      "files": ["**/tokens.css", "**/brand.css", "**/adapters/*.css"],
+      "rules": {
+        "color-no-hex": null,
+        "custom-property-pattern": null,
+        "scale-unlimited/declaration-strict-value": null,
+        "declaration-property-value-disallowed-list": null,
+        "lightness-notation": "number",
+        "hue-degree-notation": "number",
+        "alpha-value-notation": "number",
+        "custom-property-empty-line-before": null
+      }
+    }
+  ]
+}

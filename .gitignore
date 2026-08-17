@@ -1,0 +1,9 @@
+node_modules/
+.DS_Store
+*.local
+
+# Playwright run output — NOT the baselines
+test-results/
+playwright-report/
+
+# Baselines under tests/**/__screenshots__ ARE committed. Do not ignore them.

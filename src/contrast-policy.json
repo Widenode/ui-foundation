@@ -1,0 +1,166 @@
+{
+  "$schema-note": "Consumed by tests/contrast.spec.ts. `min` is either a number (both themes) or {light, dark}. `min: 0` means measured and reported but not required. Being absent from `pairs` is not an exemption — it is the one thing this policy does not allow.",
+
+  "readme": [
+    "This layer does not chase 100% AA. It makes every deviation declared rather",
+    "than accidental. Raising a floor here is how a consumer opts into a stricter",
+    "bar; see the brand.css recipe in CONTRIBUTING.md."
+  ],
+
+  "pairs": [
+    {
+      "fg": "--text-primary",
+      "bg": "--surface-base",
+      "min": 4.5,
+      "why": "Body text. Hard floor."
+    },
+    {
+      "fg": "--text-primary",
+      "bg": "--surface-raised",
+      "min": 4.5,
+      "why": "Body text at depth level 2. Hard floor."
+    },
+    {
+      "fg": "--text-secondary",
+      "bg": "--surface-base",
+      "min": 4.5,
+      "why": "Hints, captions, metadata. Hard floor — this is the pairing most likely to be used at small sizes."
+    },
+    {
+      "fg": "--text-secondary",
+      "bg": "--surface-raised",
+      "min": 4.5,
+      "why": "As above, at depth level 2."
+    },
+    {
+      "fg": "--interactive-text",
+      "bg": "--surface-base",
+      "min": 4.5,
+      "why": "Link text. Hard floor."
+    },
+    {
+      "fg": "--status-ok-text",
+      "bg": "--status-ok-bg",
+      "min": 4.5,
+      "why": "Badge and alert text. This is what carries the status meaning, so it is the pairing that must hold."
+    },
+    {
+      "fg": "--status-warn-text",
+      "bg": "--status-warn-bg",
+      "min": 4.5,
+      "why": "Badge and alert text."
+    },
+    {
+      "fg": "--status-bad-text",
+      "bg": "--status-bad-bg",
+      "min": 4.5,
+      "why": "Badge and alert text."
+    },
+
+    {
+      "fg": "--text-on-inverted",
+      "bg": "--surface-inverted",
+      "min": 4.5,
+      "why": "Tooltips and inverted banners. Hard floor — the inverted pair flips with the theme, so a mistake here fails in exactly one theme and is easy to miss by eye."
+    },
+
+    {
+      "fg": "--border-strong",
+      "bg": "--surface-base",
+      "min": 3,
+      "why": "Required by RULES.md for form controls, selected state, and anything a user must perceive to operate. If this drifts the border-first thesis is gone. axe never checks it — its contrast rule is text-only."
+    },
+    {
+      "fg": "--border-strong",
+      "bg": "--surface-raised",
+      "min": 3,
+      "why": "As above, against the level-2 surface."
+    },
+    {
+      "fg": "--focus-ring",
+      "bg": "--surface-base",
+      "min": 3,
+      "why": "Focus indicator, WCAG 2.4.11. Hard floor."
+    },
+    {
+      "fg": "--focus-ring",
+      "bg": "--surface-raised",
+      "min": 3,
+      "why": "As above, against the level-2 surface."
+    },
+
+    {
+      "fg": "--text-on-interactive",
+      "bg": "--interactive-solid",
+      "min": { "light": 4.5, "dark": 3 },
+      "why": "DECLARED BELOW AA IN DARK. Keeping the dark accent vivid is worth more than the last third of a ratio point; white measures ~4.16 there. For strict AA set --text-on-interactive to var(--n-1) in dark."
+    },
+    {
+      "fg": "--text-on-interactive",
+      "bg": "--interactive-solid-hover",
+      "min": { "light": 4.5, "dark": 3 },
+      "why": "DECLARED BELOW AA IN DARK. Dark hover climbs brighter than base, so white lands ~3.35. Base and hover must share a text colour, so this moves with the pair above."
+    },
+    {
+      "fg": "--text-on-ok",
+      "bg": "--status-ok-solid",
+      "min": { "light": 4.5, "dark": 3 },
+      "why": "DECLARED BELOW AA IN DARK, ~3.42. Same trade as the accent."
+    },
+    {
+      "fg": "--text-on-bad",
+      "bg": "--status-bad-solid",
+      "min": { "light": 4.5, "dark": 3 },
+      "why": "DECLARED BELOW AA IN DARK, ~4.04. Same trade as the accent."
+    },
+    {
+      "fg": "--text-on-warn",
+      "bg": "--status-warn-solid",
+      "min": 4.5,
+      "why": "NOT exempt, in either theme. Warn is the one ramp where white cannot work at any lightness that still reads as yellow, so it uses the darkest neutral and clears AA outright. This is the pair that justifies per-ramp on-colours."
+    },
+
+    {
+      "fg": "--status-ok-border",
+      "bg": "--status-ok-bg",
+      "min": 0,
+      "why": "Decorative. The badge's meaning is in its text, which passes 4.5:1, so the outline is not required to understand the content."
+    },
+    {
+      "fg": "--status-warn-border",
+      "bg": "--status-warn-bg",
+      "min": 0,
+      "why": "Decorative, as above."
+    },
+    {
+      "fg": "--status-bad-border",
+      "bg": "--status-bad-bg",
+      "min": 0,
+      "why": "Decorative, as above."
+    },
+    {
+      "fg": "--interactive-subtle-border",
+      "bg": "--interactive-subtle-bg",
+      "min": 0,
+      "why": "Decorative. Used for callouts and rule-notes, never to convey state."
+    },
+    {
+      "fg": "--border-default",
+      "bg": "--surface-base",
+      "min": 0,
+      "why": "Below 3:1 by design — panel and card edges. See the border section of RULES.md."
+    },
+    {
+      "fg": "--border-subtle",
+      "bg": "--surface-base",
+      "min": 0,
+      "why": "Below 3:1 by design — dividers and decorative edges."
+    },
+    {
+      "fg": "--text-disabled",
+      "bg": "--surface-raised",
+      "min": 0,
+      "why": "Exempt under WCAG 1.4.3. Corollary: disabled state must never be the only carrier of meaning."
+    }
+  ]
+}

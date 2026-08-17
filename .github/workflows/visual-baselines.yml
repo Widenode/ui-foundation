@@ -1,0 +1,57 @@
+name: Visual baselines
+
+# Manual only. Regenerating baselines is a deliberate act — see CONTRIBUTING.md.
+#
+# Screenshot baselines are environment-specific: ones generated on Windows or
+# macOS will not match Linux CI. This job runs test:visual:update inside the
+# exact image release.yml renders in, and uploads the result as an artifact for
+# a maintainer to inspect and commit.
+#
+# It deliberately does NOT commit them itself. That would need contents: write,
+# and the whole point of this repo's Actions posture is that no workflow holds a
+# write token. A human looking at the diff before it becomes the reference is
+# also the only thing standing between a token regression and a green suite.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  regenerate:
+    name: Regenerate baselines
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # Keep this tag in lockstep with @playwright/test in package.json,
+    # with release.yml, and with the docker command in CONTRIBUTING.md.
+    container: mcr.microsoft.com/playwright:v1.62.1-noble
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
+      - run: npm ci
+
+      # Everything except the visual suite must already be green. Regenerating
+      # baselines from a state that fails lint or contrast just bakes the
+      # failure into the reference images.
+      - name: Gates that must hold first
+        run: npm run lint && npm run test:a11y && npm run test:contrast
+
+      - name: Regenerate
+        run: npm run test:visual:update
+
+      - name: Confirm the new baselines pass
+        run: npm run test:visual
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: visual-baselines
+          path: tests/**/__screenshots__/**
+          if-no-files-found: error
+          retention-days: 14

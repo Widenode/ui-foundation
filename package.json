@@ -1,0 +1,74 @@
+{
+  "name": "@widenode/ui-foundation",
+  "version": "0.1.0",
+  "description": "Brand-agnostic design token foundation. Vanilla CSS custom properties, OKLCH ramps, border-first. No framework, no build step.",
+  "license": "MIT",
+  "type": "module",
+  "publishConfig": {
+    "access": "public"
+  },
+  "sideEffects": [
+    "*.css"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Widenode/ui-foundation.git"
+  },
+  "homepage": "https://github.com/Widenode/ui-foundation#readme",
+  "bugs": {
+    "url": "https://github.com/Widenode/ui-foundation/issues"
+  },
+  "keywords": [
+    "design-tokens",
+    "design-system",
+    "css-variables",
+    "custom-properties",
+    "oklch",
+    "theming",
+    "dark-mode",
+    "accessibility",
+    "wcag",
+    "stylelint-config",
+    "nuxt-ui"
+  ],
+  "files": [
+    "src",
+    "stylelint",
+    "scripts",
+    "specimen",
+    "RULES.md"
+  ],
+  "exports": {
+    "./tokens.css": "./src/tokens.css",
+    "./adapters/nuxt-ui.css": "./src/adapters/nuxt-ui.css",
+    "./contrast-policy.json": "./src/contrast-policy.json",
+    "./stylelint": "./stylelint/index.json",
+    "./scripts/check-tokens.sh": "./scripts/check-tokens.sh",
+    "./RULES.md": "./RULES.md",
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "stylelint-config-standard": "^36",
+    "stylelint-declaration-strict-value": "^1"
+  },
+  "peerDependencies": {
+    "stylelint": "^16"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4",
+    "@playwright/test": "^1",
+    "postcss-html": "^2.0.0",
+    "stylelint": "^16"
+  },
+  "scripts": {
+    "lint": "npm run lint:css && npm run lint:tokens",
+    "lint:css": "stylelint \"src/**/*.css\" \"specimen/**/*.html\"",
+    "lint:tokens": "bash scripts/check-tokens.sh src",
+    "test:a11y": "playwright test tests/a11y.spec.ts",
+    "test:contrast": "playwright test tests/contrast.spec.ts",
+    "test:visual": "playwright test tests/visual.spec.ts",
+    "test:visual:update": "playwright test tests/visual.spec.ts --update-snapshots",
+    "verify": "npm run lint && npm run test:a11y && npm run test:contrast && npm run test:visual",
+    "prepack": "npm run verify"
+  }
+}

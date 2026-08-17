@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Style guide specimen — foundation layer</title>
+
+<!-- Tokens are NOT inlined. The specimen consumes the published file, so it
+     is a live test of src/tokens.css rather than a copy that can drift. -->
+<link rel="stylesheet" href="../src/tokens.css">
+
+<style>
+/* ==========================================================================
+   SPECIMEN STYLES — consumes Tier 2 ONLY. Zero raw values, zero Tier 1 refs.
+   This file is itself the proof that the semantic layer is complete.
+   ========================================================================== */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--surface-base);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  line-height: var(--leading-base);
+  -webkit-font-smoothing: antialiased;
+  transition: background var(--duration-base) var(--ease-out);
+}
+
+:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+  border-radius: var(--radius-xs);
+}
+
+/* ---------- page frame ---------- */
+.page { max-width: 1120px; margin: 0 auto; padding: var(--space-8) var(--space-6) var(--space-20); }
+
+.topbar {
+  position: sticky; top: 0; z-index: 10;
+  display: flex; align-items: center; justify-content: space-between; gap: var(--gap-item);
+  padding: var(--space-4) var(--space-6);
+  background: var(--surface-base);
+  border-bottom: var(--border-width) solid var(--border-default);
+}
+.topbar__title { font-size: var(--text-sm); font-weight: var(--weight-semibold); letter-spacing: var(--tracking-sm); margin: 0; }
+.topbar__meta { font-size: var(--text-xs); color: var(--text-secondary); margin: var(--space-1) 0 0; }
+
+.section { margin-top: var(--gap-section); }
+.section:first-of-type { margin-top: var(--gap-group); }
+
+.section__head { border-bottom: var(--border-width) solid var(--border-default); padding-bottom: var(--gap-related); margin-bottom: var(--gap-group); }
+.section__eyebrow { font-family: var(--font-mono); font-size: var(--text-2xs); letter-spacing: var(--tracking-2xs); text-transform: uppercase; color: var(--text-secondary); margin: 0 0 var(--space-2); }
+.section__title { font-family: var(--font-display); font-size: var(--text-2xl); line-height: var(--leading-2xl); letter-spacing: var(--tracking-2xl); font-weight: var(--weight-semibold); margin: 0; }
+.section__note { max-width: var(--measure); color: var(--text-secondary); font-size: var(--text-sm); line-height: var(--leading-sm); margin: var(--gap-related) 0 0; }
+
+.block { margin-top: var(--gap-group); }
+.block__title { font-size: var(--text-sm); font-weight: var(--weight-semibold); margin: 0 0 var(--gap-related); }
+.block__note { max-width: var(--measure); color: var(--text-secondary); font-size: var(--text-sm); margin: 0 0 var(--gap-item); }
+
+.stack { display: flex; flex-direction: column; }
+.stack--item > * + * { margin-top: var(--gap-item); }
+.stack--related > * + * { margin-top: var(--gap-related); }
+
+.row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--gap-related); }
+
+/* ---------- color ramp ---------- */
+.ramp { display: grid; grid-template-columns: repeat(12, 1fr); border: var(--border-width) solid var(--border-default); border-radius: var(--radius-md); overflow: hidden; }
+.ramp__cell { aspect-ratio: 1 / 1.35; display: flex; align-items: flex-end; justify-content: center; padding-bottom: var(--space-2); font-family: var(--font-mono); font-size: var(--text-2xs); }
+.ramp__legend { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: var(--gap-related); margin-top: var(--gap-related); font-size: var(--text-xs); color: var(--text-secondary); }
+.ramp__legend b { color: var(--text-primary); font-weight: var(--weight-medium); font-family: var(--font-mono); }
+
+.swatches { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: var(--gap-related); }
+.swatch { border: var(--border-width) solid var(--border-default); border-radius: var(--radius-md); overflow: hidden; }
+.swatch__chip { height: 52px; }
+.swatch__body { padding: var(--space-3); border-top: var(--border-width) solid var(--border-subtle); }
+.swatch__name { font-family: var(--font-mono); font-size: var(--text-2xs); }
+.swatch__role { font-size: var(--text-2xs); color: var(--text-secondary); margin-top: var(--gap-tight); }
+
+/* ---------- type specimen ---------- */
+.type-row { display: grid; grid-template-columns: 84px 1fr; gap: var(--gap-item); align-items: baseline; padding: var(--gap-related) 0; border-bottom: var(--border-width) solid var(--border-subtle); }
+.type-row__label { font-family: var(--font-mono); font-size: var(--text-2xs); color: var(--text-secondary); }
+.prose { max-width: var(--measure); }
+.prose p { margin: 0 0 var(--gap-related); }
+.prose p:last-child { margin-bottom: 0; }
+
+/* ---------- spacing demo ---------- */
+.gap-demo { display: grid; grid-template-columns: 108px 1fr; gap: var(--gap-related) var(--gap-item); align-items: center; }
+.gap-demo__label { font-family: var(--font-mono); font-size: var(--text-2xs); color: var(--text-secondary); }
+.gap-demo__bar { height: 14px; background: var(--interactive-subtle-bg); border: var(--border-width) solid var(--interactive-subtle-border); border-radius: var(--radius-xs); }
+
+.proximity { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: var(--gap-item); }
+.proximity__demo { border: var(--border-width) solid var(--border-default); border-radius: var(--radius-md); padding: var(--space-5); }
+.proximity__demo h4 { margin: 0 0 var(--gap-related); font-size: var(--text-xs); font-weight: var(--weight-semibold); color: var(--text-secondary); }
+.fake-field { border: var(--border-width) solid var(--border-strong); border-radius: var(--radius-sm); height: var(--control-height-sm); background: var(--surface-base); }
+.fake-label { font-size: var(--text-xs); color: var(--text-secondary); margin-bottom: var(--gap-tight); }
+.good .fake-set + .fake-set { margin-top: var(--gap-item); }
+.bad .fake-set + .fake-set { margin-top: var(--gap-tight); }
+.bad .fake-label { margin-bottom: var(--gap-tight); }
+
+/* ---------- controls ---------- */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--gap-tight);
+  min-height: var(--control-height-md);
+  padding: 0 var(--space-4);
+  font: inherit; font-size: var(--text-sm); font-weight: var(--weight-medium);
+  border-radius: var(--radius-md);
+  border: var(--border-width) solid transparent;
+  cursor: pointer;
+  transition: background var(--duration-fast) var(--ease-out), border-color var(--duration-fast) var(--ease-out), color var(--duration-fast) var(--ease-out);
+}
+.btn--solid { background: var(--interactive-solid); color: var(--text-on-interactive); }
+.btn--solid:hover { background: var(--interactive-solid-hover); }
+.btn--outline { background: var(--surface-base); color: var(--text-primary); border-color: var(--border-strong); }
+.btn--outline:hover { background: var(--interactive-bg-hover); }
+.btn--ghost { background: transparent; color: var(--text-primary); }
+.btn--ghost:hover { background: var(--interactive-bg-hover); }
+.btn--danger { background: var(--status-bad-solid); color: var(--text-on-bad); }
+.btn--ok { background: var(--status-ok-solid); color: var(--text-on-ok); }
+.btn--warn { background: var(--status-warn-solid); color: var(--text-on-warn); }
+.btn[disabled] { color: var(--text-disabled); background: var(--surface-raised); border-color: var(--border-subtle); cursor: not-allowed; }
+.btn--sm { min-height: var(--control-height-sm); font-size: var(--text-xs); padding: 0 var(--space-3); }
+.btn--lg { min-height: var(--control-height-lg); padding: 0 var(--space-5); }
+
+.field { display: flex; flex-direction: column; }
+.field + .field { margin-top: var(--gap-item); }
+.field__label { font-size: var(--text-sm); font-weight: var(--weight-medium); margin-bottom: var(--gap-tight); }
+.field__hint { font-size: var(--text-xs); color: var(--text-secondary); margin-top: var(--gap-tight); }
+.field__error { font-size: var(--text-xs); color: var(--status-bad-text); margin-top: var(--gap-tight); display: flex; gap: var(--gap-tight); align-items: flex-start; }
+
+.input {
+  min-height: var(--control-height-md);
+  padding: 0 var(--control-pad-x);
+  font: inherit; font-size: var(--text-sm);
+  color: var(--text-primary);
+  background: var(--surface-base);
+  border: var(--border-width) solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  width: 100%;
+  transition: border-color var(--duration-fast) var(--ease-out);
+}
+.input::placeholder { color: var(--text-disabled); }
+.input:hover:not([disabled]) { border-color: var(--text-secondary); }
+.input[disabled] { background: var(--surface-raised); color: var(--text-disabled); cursor: not-allowed; border-color: var(--border-default); }
+.input[aria-invalid="true"] { border-color: var(--status-bad-solid); }
+textarea.input { padding: var(--space-2) var(--control-pad-x); min-height: 84px; resize: vertical; line-height: var(--leading-sm); }
+select.input { appearance: none; background-image: linear-gradient(45deg, transparent 50%, currentcolor 50%), linear-gradient(135deg, currentcolor 50%, transparent 50%); background-position: right 16px center, right 11px center; background-size: 5px 5px, 5px 5px; background-repeat: no-repeat; padding-right: var(--space-8); }
+
+/* ---------- panel / depth ---------- */
+.panel { background: var(--surface-base); border: var(--border-width) solid var(--border-default); border-radius: var(--radius-lg); }
+.panel__head { padding: var(--space-4) var(--space-5); border-bottom: var(--border-width) solid var(--border-subtle); display: flex; align-items: center; justify-content: space-between; gap: var(--gap-related); }
+.panel__title { margin: 0; font-size: var(--text-sm); font-weight: var(--weight-semibold); }
+.panel__body { padding: var(--space-5); }
+.panel--raised { background: var(--surface-raised); }
+
+.depth { border: var(--border-width) solid var(--border-default); border-radius: var(--radius-md); padding: var(--space-4); background: var(--surface-base); }
+.depth__label { font-family: var(--font-mono); font-size: var(--text-2xs); color: var(--text-secondary); margin-bottom: var(--gap-related); }
+.depth--l2 { background: var(--surface-raised); }
+.depth--l3 { border: none; border-left: 2px solid var(--border-subtle); border-radius: 0; padding: 0 0 0 var(--space-4); background: transparent; }
+
+/* ---------- table ---------- */
+
+/* overflow-x rather than hidden: at 390px this table is wider than the
+   viewport, and clipping it puts the numeric columns permanently out of reach.
+   RULES.md says truncate cells, never wrap — the container still has to scroll. */
+.table-wrap { border: var(--border-width) solid var(--border-default); border-radius: var(--radius-lg); overflow-x: auto; }
+.table { width: 100%; border-collapse: collapse; font-size: var(--text-sm); }
+.table th, .table td { text-align: left; padding: var(--space-3) var(--space-4); border-bottom: var(--border-width) solid var(--border-subtle); }
+.table thead th { background: var(--surface-raised); font-size: var(--text-xs); font-weight: var(--weight-semibold); color: var(--text-secondary); border-bottom-color: var(--border-default); white-space: nowrap; }
+.table tbody tr:last-child td { border-bottom: none; }
+.table tbody tr:hover td { background: var(--surface-raised); }
+.table .num { text-align: right; font-variant-numeric: tabular-nums; }
+.table .truncate { max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.badge { display: inline-flex; align-items: center; gap: var(--gap-tight); padding: 2px var(--space-2); font-size: var(--text-2xs); font-weight: var(--weight-medium); border-radius: var(--radius-full); border: var(--border-width) solid; }
+.badge--ok { background: var(--status-ok-bg); border-color: var(--status-ok-border); color: var(--status-ok-text); }
+.badge--warn { background: var(--status-warn-bg); border-color: var(--status-warn-border); color: var(--status-warn-text); }
+.badge--bad { background: var(--status-bad-bg); border-color: var(--status-bad-border); color: var(--status-bad-text); }
+.badge--neutral { background: var(--surface-raised); border-color: var(--border-default); color: var(--text-secondary); }
+
+/* ---------- alert ---------- */
+.alert { display: flex; gap: var(--gap-related); padding: var(--space-4); border-radius: var(--radius-md); border: var(--border-width) solid; font-size: var(--text-sm); }
+.alert__title { font-weight: var(--weight-semibold); margin: 0 0 var(--space-1); }
+.alert__body { margin: 0; }
+.alert--ok { background: var(--status-ok-bg); border-color: var(--status-ok-border); color: var(--status-ok-text); }
+.alert--warn { background: var(--status-warn-bg); border-color: var(--status-warn-border); color: var(--status-warn-text); }
+.alert--bad { background: var(--status-bad-bg); border-color: var(--status-bad-border); color: var(--status-bad-text); }
+
+/* ---------- empty state ---------- */
+.empty { text-align: center; padding: var(--space-16) var(--space-6); border: var(--border-width) dashed var(--border-default); border-radius: var(--radius-lg); }
+.empty__title { font-size: var(--text-base); font-weight: var(--weight-semibold); margin: 0 0 var(--space-2); }
+.empty__body { font-size: var(--text-sm); color: var(--text-secondary); margin: 0 auto var(--gap-item); max-width: var(--measure-narrow); }
+
+/* ---------- inverted surface ---------- */
+.tooltip { background: var(--surface-inverted); color: var(--text-on-inverted); border-radius: var(--radius-sm); padding: var(--space-2) var(--space-3); font-size: var(--text-xs); max-width: 260px; box-shadow: var(--shadow-popover); }
+
+/* ---------- popover (the only shadow) ---------- */
+.popover { background: var(--surface-overlay); border: var(--border-width) solid var(--border-default); border-radius: var(--radius-lg); box-shadow: var(--shadow-popover); padding: var(--space-4); max-width: 280px; font-size: var(--text-sm); }
+
+/* ---------- misc ---------- */
+.mono { font-family: var(--font-mono); font-size: var(--text-xs); }
+.muted { color: var(--text-secondary); }
+.grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: var(--gap-item); }
+.rule-note { border-left: 2px solid var(--interactive-subtle-border); background: var(--interactive-subtle-bg); padding: var(--space-3) var(--space-4); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; font-size: var(--text-sm); max-width: var(--measure); }
+.rule-note code { font-family: var(--font-mono); font-size: 0.92em; }
+
+@media (width <= 640px) {
+  .page { padding: var(--space-6) var(--space-4) var(--gap-group); }
+  .type-row { grid-template-columns: 1fr; gap: var(--gap-tight); }
+  .gap-demo { grid-template-columns: 76px 1fr; }
+  .ramp__cell { aspect-ratio: 1 / 2.2; font-size: 9px; }
+}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div>
+    <h1 class="topbar__title">Foundation layer — specimen</h1>
+    <p class="topbar__meta">Balanced density · border-first · 4–6px radius · placeholder brand</p>
+  </div>
+  <button class="btn btn--outline btn--sm" id="theme-toggle" aria-pressed="false">Dark</button>
+</header>
+
+<main class="page">
+
+  <!-- ============ COLOR ============ -->
+  <section class="section">
+    <div class="section__head">
+      <p class="section__eyebrow">01 — Color</p>
+      <h2 class="section__title">Ramps and roles</h2>
+      <p class="section__note">Authored in OKLCH so equal steps read as equal steps across hues. Each step has an assigned <em>role</em>, so “which grey is the disabled border” stops being a decision. Swapping the brand means replacing these ramps and nothing else.</p>
+    </div>
+
+    <div class="block">
+      <h3 class="block__title">Neutral</h3>
+      <div class="ramp" id="ramp-neutral"></div>
+      <div class="ramp__legend">
+        <div><b>1–2</b> page &amp; subtle backgrounds</div>
+        <div><b>3–5</b> component bg, hover, active</div>
+        <div><b>6–8</b> borders: subtle → strong</div>
+        <div><b>9–10</b> solid fill and its hover</div>
+        <div><b>11</b> secondary text (AA)</div>
+        <div><b>12</b> primary text</div>
+      </div>
+    </div>
+
+    <div class="block">
+      <h3 class="block__title">Accent <span class="muted" style="font-weight:var(--weight-normal)">— placeholder, meant to be replaced</span></h3>
+      <div class="ramp" id="ramp-accent"></div>
+    </div>
+
+    <div class="block">
+      <h3 class="block__title">Semantic roles in use</h3>
+      <div class="swatches" id="semantic-swatches"></div>
+    </div>
+
+    <div class="block">
+      <div class="rule-note">
+        <strong>The border finding.</strong> Border-first has a contrast tension worth knowing up front: a hairline that reads well against white sits around 1.3:1, far below the 3:1 that WCAG requires of any boundary <em>conveying information</em>. So there are three border tokens, not one. <code>--border-subtle</code> and <code>--border-default</code> are decorative — dividers, card edges. <code>--border-strong</code> meets 3:1 and is mandatory for form controls, selected states, and anything a user must perceive to operate. Getting this wrong is the most common way a flat, hairline aesthetic quietly fails an audit.
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ TYPE ============ -->
+  <section class="section">
+    <div class="section__head">
+      <p class="section__eyebrow">02 — Type</p>
+      <h2 class="section__title">Scale, leading, measure</h2>
+      <p class="section__note">Size, line-height and tracking are authored as triplets — leading tightens as size grows, tracking goes negative at display sizes. Family is a brand-layer slot; these are fallbacks.</p>
+    </div>
+
+    <div class="block" id="type-scale"></div>
+
+    <div class="block">
+      <h3 class="block__title">Measure — set at 68ch</h3>
+      <div class="prose">
+        <p>Line length is one of the few typographic rules with real reading research behind it: somewhere between 45 and 75 characters, with roughly 66 as the comfortable centre. Below that the eye returns too often; above it, finding the start of the next line gets unreliable.</p>
+        <p class="muted" style="font-size:var(--text-sm)">This paragraph is secondary text at the small size — the pairing you will use most for hints, captions and metadata. It passes AA against both the base and raised surfaces.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ SPACING ============ -->
+  <section class="section">
+    <div class="section__head">
+      <p class="section__eyebrow">03 — Spacing</p>
+      <h2 class="section__title">Proximity as structure</h2>
+      <p class="section__note">Whitespace is not decoration — it encodes grouping. The scale is named by relationship rather than size, which is what makes the rule self-enforcing: space inside a group is always smaller than space around it.</p>
+    </div>
+
+    <div class="block">
+      <div class="gap-demo" id="gap-demo"></div>
+    </div>
+
+    <div class="block">
+      <h3 class="block__title">The rule, demonstrated</h3>
+      <div class="proximity">
+        <div class="proximity__demo good">
+          <h4>Correct — ratio preserved</h4>
+          <div class="fake-set">
+            <div class="fake-label">Contact email</div>
+            <div class="fake-field"></div>
+          </div>
+          <div class="fake-set">
+            <div class="fake-label">Billing reference</div>
+            <div class="fake-field"></div>
+          </div>
+        </div>
+        <div class="proximity__demo bad">
+          <h4>Broken — equal spacing everywhere</h4>
+          <div class="fake-set">
+            <div class="fake-label">Contact email</div>
+            <div class="fake-field"></div>
+          </div>
+          <div class="fake-set">
+            <div class="fake-label">Billing reference</div>
+            <div class="fake-field"></div>
+          </div>
+        </div>
+      </div>
+      <p class="block__note" style="margin-top:var(--gap-related)">Same tokens, same components. The right-hand version is the single most common failure in generated UI, and it is visible in a screenshot — which makes it checkable.</p>
+    </div>
+  </section>
+
+  <!-- ============ DEPTH ============ -->
+  <section class="section">
+    <div class="section__head">
+      <p class="section__eyebrow">04 — Depth</p>
+      <h2 class="section__title">Nesting policy</h2>
+      <p class="section__note">The rule that matters most for a future tree renderer: <strong>never nest more than two surfaces.</strong> Past level two, switch from containment to indentation. Without this, deep data becomes nested-panel hell.</p>
+    </div>
+    <div class="block">
+      <div class="depth">
+        <div class="depth__label">level 1 — surface-base, bordered</div>
+        <div class="depth depth--l2">
+          <div class="depth__label">level 2 — surface-raised, bordered</div>
+          <div class="depth depth--l3">
+            <div class="depth__label">level 3 — no surface, rule + indent only</div>
+            <p style="margin:0;font-size:var(--text-sm)" class="muted">Everything deeper than this uses the same treatment, or drills into its own view.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ CONTROLS ============ -->
+  <section class="section">
+    <div class="section__head">
+      <p class="section__eyebrow">05 — Controls</p>
+      <h2 class="section__title">States and forms</h2>
+      <p class="section__note">Every state defined once, here, so nothing invents its own later. Focus is a ring rather than a border change — in a border-first system, a colour-only border swap is too quiet to serve as focus.</p>
+    </div>
+
+    <div class="block">
+      <h3 class="block__title">Buttons</h3>
+      <div class="row">
+        <button class="btn btn--solid">Save changes</button>
+        <button class="btn btn--outline">Cancel</button>
+        <button class="btn btn--ghost">Reset filters</button>
+        <button class="btn btn--danger">Delete order</button>
+        <button class="btn btn--outline" disabled>Unavailable</button>
+      </div>
+      <div class="row" style="margin-top:var(--gap-related)">
+        <button class="btn btn--ok">Approve order</button>
+        <button class="btn btn--warn">Flag for review</button>
+        <span class="muted" style="font-size:var(--text-xs)">Each solid fill names its own text colour. Only warn is near-black — no yellow that still reads as yellow carries white text at 4.5:1.</span>
+      </div>
+      <div class="row" style="margin-top:var(--gap-related)">
+        <button class="btn btn--outline btn--sm">Small</button>
+        <button class="btn btn--outline">Medium</button>
+        <button class="btn btn--outline btn--lg">Large (44px target)</button>
+      </div>
+    </div>
+
+    <div class="block grid-2">
+      <div class="panel">
+        <div class="panel__head"><h3 class="panel__title">Form — including a tight error</h3></div>
+        <div class="panel__body">
+          <div class="field">
+            <label class="field__label" for="f-name">Product name</label>
+            <input class="input" id="f-name" value="Anodised aluminium laptop stand, adjustable">
+            <span class="field__hint">Shown to customers in search results.</span>
+          </div>
+          <div class="field">
+            <label class="field__label" for="f-sku">SKU</label>
+            <input class="input" id="f-sku" value="LT-STD-0041-XX" aria-invalid="true" aria-describedby="f-sku-err">
+            <span class="field__error" id="f-sku-err">SKU already used by “Aluminium laptop stand (v1)”. Pick a different one.</span>
+          </div>
+          <div class="field">
+            <label class="field__label" for="f-cat">Category</label>
+            <select class="input" id="f-cat">
+              <option>electronic.computer.laptop</option>
+              <option>electronic.computer.accessory</option>
+            </select>
+          </div>
+          <div class="field">
+            <label class="field__label" for="f-note">Internal note</label>
+            <textarea class="input" id="f-note" placeholder="Optional"></textarea>
+          </div>
+          <div class="field">
+            <label class="field__label" for="f-dis">Supplier code</label>
+            <input class="input" id="f-dis" value="Locked by procurement" disabled>
+          </div>
+        </div>
+      </div>
+
+      <div class="stack stack--item">
+        <div class="alert alert--bad">
+          <div><p class="alert__title">Payment declined</p><p class="alert__body">The card issuer rejected the charge. Try a different card, or contact your bank.</p></div>
+        </div>
+        <div class="alert alert--warn">
+          <div><p class="alert__title">Stock running low</p><p class="alert__body">Three items in this cart have fewer than five units remaining.</p></div>
+        </div>
+        <div class="alert alert--ok">
+          <div><p class="alert__title">Order placed</p><p class="alert__body">Confirmation sent to the billing address on file.</p></div>
+        </div>
+        <div class="popover">
+          <p style="margin:0 0 var(--space-2);font-weight:var(--weight-semibold);font-size:var(--text-sm)">Popover</p>
+          <p style="margin:0" class="muted">The only elements that carry shadow are ones that float above the page. Nothing in normal flow gets one.</p>
+        </div>
+        <div class="tooltip">Inverted surface — the one role that flips with the theme rather than tracking it. Near-black on a light page, near-white on a dark one.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ DATA ============ -->
+  <section class="section">
+    <div class="section__head">
+      <p class="section__eyebrow">06 — Data</p>
+      <h2 class="section__title">Hostile content</h2>
+      <p class="section__note">Tokens proven against the content that actually breaks them: overlong names, tabular numbers, mixed status, and nothing at all.</p>
+    </div>
+
+    <div class="block">
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Item</th><th>Type</th><th>Status</th>
+              <th class="num">Qty</th><th class="num">Unit</th><th class="num">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td class="truncate" title="Anodised aluminium laptop stand, adjustable height, matte charcoal finish">Anodised aluminium laptop stand, adjustable height, matte charcoal finish</td><td class="mono muted">…computer.accessory</td><td><span class="badge badge--ok">In stock</span></td><td class="num">2</td><td class="num">64.00</td><td class="num">128.00</td></tr>
+            <tr><td class="truncate" title="14&quot; ultraportable notebook">14&quot; ultraportable notebook</td><td class="mono muted">…computer.laptop</td><td><span class="badge badge--warn">Low</span></td><td class="num">1</td><td class="num">1,499.00</td><td class="num">1,499.00</td></tr>
+            <tr><td class="truncate" title="USB-C hub">USB-C hub</td><td class="mono muted">…computer.accessory</td><td><span class="badge badge--bad">Backordered</span></td><td class="num">3</td><td class="num">39.95</td><td class="num">119.85</td></tr>
+            <tr><td class="truncate" title="Extended warranty, 36 months">Extended warranty, 36 months</td><td class="mono muted">…service.warranty</td><td><span class="badge badge--neutral">Pending</span></td><td class="num">1</td><td class="num">180.00</td><td class="num">180.00</td></tr>
+            <tr><td class="truncate" title="Braided charging cable, 2 m">Braided charging cable, 2 m</td><td class="mono muted">…computer.accessory</td><td><span class="badge badge--ok">In stock</span></td><td class="num">12</td><td class="num">11.50</td><td class="num">138.00</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="block">
+      <h3 class="block__title">Empty</h3>
+      <div class="empty">
+        <p class="empty__title">Nothing in this cart yet</p>
+        <p class="empty__body">Items you add will appear here with live pricing and stock.</p>
+        <button class="btn btn--solid">Browse catalogue</button>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<script>
+(function () {
+  var neutral = ['--n-1','--n-2','--n-3','--n-4','--n-5','--n-6','--n-7','--n-8','--n-9','--n-10','--n-11','--n-12'];
+  var accent  = ['--a-1','--a-2','--a-3','--a-4','--a-5','--a-6','--a-7','--a-8','--a-9','--a-10','--a-11','--a-12'];
+
+  function buildRamp(id, vars) {
+    var el = document.getElementById(id);
+    el.innerHTML = vars.map(function (v, i) {
+      var fg = i >= 8 ? 'var(--n-1)' : 'var(--n-12)';
+      return '<div class="ramp__cell" style="background:var(' + v + ');color:' + fg + '">' + (i + 1) + '</div>';
+    }).join('');
+  }
+  buildRamp('ramp-neutral', neutral);
+  buildRamp('ramp-accent', accent);
+
+  var semantic = [
+    ['--surface-base', 'Page background'],
+    ['--surface-raised', 'One level up'],
+    ['--border-subtle', 'Decorative divider'],
+    ['--border-strong', 'Form controls — 3:1'],
+    ['--interactive-solid', 'Primary action'],
+    ['--text-secondary', 'Secondary text — AA'],
+    ['--status-ok-solid', 'Success'],
+    ['--status-bad-solid', 'Danger']
+  ];
+  document.getElementById('semantic-swatches').innerHTML = semantic.map(function (s) {
+    return '<div class="swatch"><div class="swatch__chip" style="background:var(' + s[0] + ')"></div>' +
+           '<div class="swatch__body"><div class="swatch__name">' + s[0] + '</div>' +
+           '<div class="swatch__role">' + s[1] + '</div></div></div>';
+  }).join('');
+
+  var sizes = [
+    ['4xl', 'Shopping cart'],
+    ['3xl', 'Order summary'],
+    ['2xl', 'Delivery details'],
+    ['xl',  'Payment method'],
+    ['lg',  'Items in this order'],
+    ['base','Standard body copy for reading at length.'],
+    ['sm',  'Secondary and supporting text.'],
+    ['xs',  'Labels, captions, metadata.'],
+    ['2xs', 'EYEBROWS AND OVERLINES']
+  ];
+  document.getElementById('type-scale').innerHTML = sizes.map(function (s) {
+    return '<div class="type-row"><div class="type-row__label">' + s[0] + '</div>' +
+           '<div style="font-size:var(--text-' + s[0] + ');line-height:var(--leading-' + s[0] +
+           ');letter-spacing:var(--tracking-' + s[0] + ')">' + s[1] + '</div></div>';
+  }).join('');
+
+  var gaps = [
+    ['--gap-tight', 'icon ↔ label'],
+    ['--gap-related', 'label ↔ input'],
+    ['--gap-item', 'field ↔ field'],
+    ['--gap-group', 'group ↔ group'],
+    ['--gap-section', 'section ↔ section']
+  ];
+  document.getElementById('gap-demo').innerHTML = gaps.map(function (g) {
+    return '<div class="gap-demo__label">' + g[0].replace('--gap-', '') + '</div>' +
+           '<div><div class="gap-demo__bar" style="width:var(' + g[0] + ')"></div>' +
+           '<div style="font-size:var(--text-2xs);color:var(--text-secondary);margin-top:var(--space-1)">' + g[1] + '</div></div>';
+  }).join('');
+
+  var toggle = document.getElementById('theme-toggle');
+  toggle.addEventListener('click', function () {
+    var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+    document.documentElement.setAttribute('data-theme', dark ? 'light' : 'dark');
+    toggle.textContent = dark ? 'Dark' : 'Light';
+    toggle.setAttribute('aria-pressed', String(!dark));
+  });
+})();
+</script>
+</body>
+</html>

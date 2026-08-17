@@ -1,0 +1,195 @@
+/* nuxt-ui.css — Nuxt UI v4 adapter
+ *
+ * Maps Nuxt UI's own semantic layer (--ui-*) onto our Tier 2 tokens, so Nuxt
+ * UI becomes a consumer of this system rather than a parallel one.
+ *
+ * This file creates NO dependency on Nuxt UI, Vue or Tailwind. It is a
+ * stylesheet that happens to assign the custom-property names Nuxt UI reads.
+ * Loading it without Nuxt UI present is inert.
+ *
+ * Token names were taken from Nuxt UI v4's CSS-variables documentation
+ * (ui.nuxt.com/docs/getting-started/theme/css-variables), not from memory.
+ * Re-check them on every Nuxt UI major — a renamed --ui-* token fails silently
+ * to `unset`, which is exactly what the visual regression suite is there for.
+ *
+ * ---------------------------------------------------------------------------
+ * USAGE — order matters
+ *
+ *   @import "tailwindcss";
+ *   @import "@nuxt/ui";
+ *   @import "@widenode/ui-foundation/tokens.css";
+ *   @import "@widenode/ui-foundation/adapters/nuxt-ui.css";   <- last
+ *
+ * Nuxt UI declares its defaults on `:root` and `.dark`, both of which this
+ * file also targets. `:root` ties Nuxt UI's `:root` on specificity, so source
+ * order decides — import this last. The `:root.dark` selector is deliberately
+ * more specific than Nuxt UI's bare `.dark`, so dark mode wins regardless.
+ *
+ * ---------------------------------------------------------------------------
+ * THEME ATTRIBUTE — the one thing this file cannot fix
+ *
+ * Our Tier 2 flips on `[data-theme="dark"]`. Nuxt UI (via @nuxtjs/color-mode)
+ * toggles a `.dark` CLASS. CSS cannot set an attribute, so the consuming app
+ * must drive both, e.g. in app.vue:
+ *
+ *   const mode = useColorMode()
+ *   useHead({ htmlAttrs: { 'data-theme': () => mode.value } })
+ *
+ * Without this, `.dark` is set but our ramps stay light and the whole system
+ * silently renders in light mode. It is the first thing to check.
+ *
+ * ---------------------------------------------------------------------------
+ * WHY THE MAPPING IS ONE BLOCK
+ *
+ * Every value below is a Tier 2 token, and Tier 2 already re-points itself per
+ * theme. So there is exactly one mapping, not a light one and a dark one — the
+ * selector list only exists to out-rank Nuxt UI's own `.dark` declarations.
+ */
+
+:root,
+:root.dark,
+:root[data-theme="dark"] {
+  /* ------------------------------------------------------------------------
+     Colour aliases
+
+     Nuxt UI exposes six. We have one accent ramp plus three status ramps, so
+     two of the six are compromises rather than mappings — see the header notes
+     in the release report and the "unmapped" list at the foot of this file.
+     ------------------------------------------------------------------------ */
+  --ui-primary: var(--interactive-solid);
+
+  /* COMPROMISE: the foundation has a single accent ramp by design (brand hue
+     is deliberately open in RULES.md). Aliasing secondary onto primary keeps
+     Nuxt UI on-brand at the cost of collapsing a distinction Nuxt UI draws.
+     The alternative — leaving it unmapped — leaks Nuxt UI's default blue,
+     which is worse. Fix properly by adding a second Tier 1 ramp. */
+  --ui-secondary: var(--interactive-solid);
+
+  --ui-success: var(--status-ok-solid);
+
+  /* COMPROMISE: there is no "info" status ramp — RULES.md defines ok / warn /
+     bad only. Accent is the conventional stand-in and keeps it on-brand. */
+  --ui-info: var(--interactive-solid);
+
+  --ui-warning: var(--status-warn-solid);
+  --ui-error: var(--status-bad-solid);
+
+  /* ------------------------------------------------------------------------
+     Text
+
+     Nuxt UI has six steps; we have four, one of which (`--text-on-solid`) is
+     not part of the dim→bright axis. `toned` and `highlighted` therefore
+     collapse onto their neighbours. Collapsing is safe in the direction we
+     collapse: both merge toward MORE contrast, never less.
+     ------------------------------------------------------------------------ */
+  --ui-text-dimmed: var(--text-disabled);
+  --ui-text-muted: var(--text-secondary);
+  --ui-text-toned: var(--text-secondary);        /* collapsed onto muted */
+  --ui-text: var(--text-primary);
+  --ui-text-highlighted: var(--text-primary);    /* collapsed onto text */
+
+  /* Nuxt UI uses one token for two jobs our model separates: text on the
+     inverted surface, and text on a solid fill. Its own docs only ever
+     demonstrate it paired with bg-inverted, so that is the pairing we honour —
+     it is also the only one of the two that can render unreadable if we get it
+     wrong. Consequence worth knowing: Nuxt UI solid buttons will take
+     near-black text in dark mode where our own .btn--solid takes white. That
+     divergence is cosmetic, not an a11y defect — measured, --text-on-inverted
+     lands at 6.40 / 4.56 (light / dark) on --interactive-solid and 7.98 / 5.65
+     on its hover, so all four clear AA. Ironically that makes Nuxt UI's solid
+     buttons stricter than our own, which sit on a declared 3:1 floor in dark.
+     A consumer who uses no inverted
+     surfaces anywhere can force parity with
+     `--ui-text-inverted: var(--text-on-interactive)`. */
+  --ui-text-inverted: var(--text-on-inverted);
+
+  /* ------------------------------------------------------------------------
+     Backgrounds
+
+     Mapped by ramp position rather than by name. Nuxt UI's four steps walk
+     n-1 → n-2 → n-3 → n-4 in light and climb again in dark; our Tier 2 handles
+     for those positions are base, raised, and the two interactive fills.
+
+     `--surface-sunken` is deliberately NOT used for `--ui-bg-elevated`: it
+     sits below base in dark mode, which would invert the direction Nuxt UI
+     expects. The interactive fills move away from base in both themes.
+     ------------------------------------------------------------------------ */
+  --ui-bg: var(--surface-base);
+  --ui-bg-muted: var(--surface-raised);
+  --ui-bg-elevated: var(--interactive-bg-hover);
+  --ui-bg-accented: var(--interactive-bg-active);
+  --ui-bg-inverted: var(--surface-inverted);
+
+  /* ------------------------------------------------------------------------
+     Borders
+
+     `--ui-border-accented` is Nuxt UI's form-control border. Pointing it at
+     `--border-strong` rather than `--border-default` is the whole reason this
+     adapter is worth having: Nuxt UI's default sits below 3:1, and RULES.md
+     requires 3:1 on anything a user must perceive to operate.
+     ------------------------------------------------------------------------ */
+  --ui-border: var(--border-default);
+  --ui-border-muted: var(--border-subtle);
+  --ui-border-accented: var(--border-strong);
+  --ui-border-inverted: var(--surface-inverted);
+}
+
+/* ============================================================================
+   NOT MAPPED — deliberately. Nuxt UI's own defaults remain in force for these.
+
+   1. --ui-radius
+      Mapping it would create a circular custom-property reference. Nuxt UI
+      derives Tailwind's whole radius scale from it — `--radius-sm: var(--ui-radius)`
+      and friends — and those names collide exactly with our Tier 1
+      `--radius-*`. So `--ui-radius: var(--radius-sm)` closes a cycle and CSS
+      drops BOTH properties as invalid at computed-value time.
+      No mapping is needed anyway: Nuxt UI's default `--ui-radius` is 0.25rem,
+      which already produces sm 4px / md 6px / lg 8px — our scale exactly.
+      See NAMESPACE COLLISIONS below.
+
+   2. --ui-container, --ui-header-height
+      No Tier 2 equivalent. The foundation has `--measure*` (character-based,
+      for prose) but no page-container or app-chrome dimension, and inventing
+      one here would be a token addition without a RULES.md rationale.
+
+   3. --ui-color-{alias}-{50..950}
+      Nuxt UI generates a 50–950 tint scale per alias from Tailwind palettes.
+      Our Tier 1 is a 12-step OKLCH ramp with assigned roles — the two are not
+      the same shape, and there is no correct element-wise mapping. Overriding
+      the semantic `--ui-*` layer covers components that use it; any component
+      referencing `--ui-color-*` or a raw Tailwind palette class bypasses this
+      file entirely.
+
+   4. Shadows
+      Nuxt UI carries no shadow custom property — components use Tailwind
+      `shadow-*` utilities. RULES.md's "shadow means floats above the page"
+      cannot be enforced through this file; it needs the lint rule in
+      scripts/check-tokens.sh, which already bans `shadow-{sm,md,lg,xl,2xl}`.
+
+   NAMESPACE COLLISIONS — known, and deliberately not "fixed"
+
+   Two of our Tier 1 names are also Tailwind v4 theme names, so both land in
+   :root and the later stylesheet wins:
+
+     --radius-xs/sm/md/lg   ours are fixed px; Tailwind's are multiples of
+                            --ui-radius
+     --ease-in/out/in-out   ours are cubic-bezier(0.22, 1, 0.36, 1) and
+                            friends; Tailwind's are its own curves
+
+   Renaming Tier 1 to dodge this was considered and rejected. Under the import
+   order at the top of this file our declarations come last and win, which is
+   the desired outcome — and the radius values coincide anyway: Nuxt UI's
+   default --ui-radius of 0.25rem yields sm 4 / md 6 / lg 8, identical to ours.
+   Only --radius-xs differs (theirs 2px, ours 3px). So the collision is benign
+   in both orders for radius, and order-dependent for easing only.
+
+   The cost of renaming — breaking every consumer, for a 1px difference on one
+   token — is not worth paying. What matters is that the import order is
+   followed; if easing ever looks wrong, check it first.
+
+   Tier 2 roles with no Nuxt UI counterpart, for completeness:
+   --interactive-solid-hover (Nuxt UI does hover with opacity modifiers),
+   --surface-sunken, --surface-overlay, --focus-ring*, --shadow-*, the whole
+   --gap-* proximity scale, --control-height-*, --target-min, --measure*, and
+   the type triplets. Those stay a component-authoring concern.
+   ============================================================================ */

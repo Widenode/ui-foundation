@@ -1,0 +1,73 @@
+name: CI
+
+# `pull_request`, deliberately NOT `pull_request_target`.
+#
+# This repo is public and takes fork PRs. `pull_request` checks out the fork's
+# code and runs it with a read-only GITHUB_TOKEN and no access to repository
+# secrets. `pull_request_target` would run that same untrusted code with the
+# base repo's write token and secrets in scope — which is how a token-stealing
+# PR gets merged into a package thousands of apps install. Do not change it.
+#
+# There are no secrets in this repo to leak anyway (publishing is OIDC, see
+# release.yml), and this workflow is what keeps it that way.
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  gates:
+    name: lint + a11y
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # Stylelint + the text-level Tier 2 backstop. No browser needed.
+      - name: Lint
+        run: npm run lint
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      # The Tier 1 gate: contrast, target size, ARIA, focus order.
+      - name: Accessibility
+        run: npm run test:a11y
+
+      # The declared contrast policy. Deterministic — no screenshots, no font
+      # rendering — so unlike test:visual it is safe to run on any runner.
+      - name: Contrast policy
+        run: npm run test:contrast
+
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
+
+# NOTE — test:visual is not run here.
+# Screenshot baselines are OS- and image-specific: the committed ones must be
+# generated in the same environment CI renders in. Until Linux baselines exist
+# under tests/**/__screenshots__, adding a visual job here would fail every PR.
+# release.yml already runs the full `verify` (including visual) via `prepack`,
+# inside the pinned Playwright image — that is the environment to generate them
+# in. See CONTRIBUTING.md.

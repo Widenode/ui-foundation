@@ -1,0 +1,331 @@
+/* tokens.css — foundation layer
+ * Brand-agnostic. Balanced density, border-first, 4-6px radius.
+ * Extracted from specimen.html; specimen.html is the visual proof of this file.
+ *
+ * THE ONE RULE: components reference Tier 2 only. Never a primitive,
+ * never a raw value. Break it once and both swap axes die.
+ */
+
+/* ==========================================================================
+   FOUNDATION TOKENS
+   Tier 1 = primitives (raw ramps + scales). Never referenced by components.
+   Tier 2 = semantic roles. The ONLY thing components are allowed to touch.
+
+   Brand swap  -> replace Tier 1 ramps.
+   Skin swap   -> replace the Tier 2 mapping.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   TIER 1 — PRIMITIVES
+   Ramps follow the Radix 12-step role model, authored in OKLCH so that equal
+   numeric steps are perceptually equal steps across every hue.
+   1 app bg | 2 subtle bg | 3 component bg | 4 hover | 5 active | 6 subtle border
+   7 border | 8 strong border | 9 solid | 10 solid hover | 11 text | 12 text high
+   -------------------------------------------------------------------------- */
+:root {
+  /* Neutral — slightly cool. The workhorse of a border-first system. */
+  --n-1:  oklch(0.994 0.001 264);
+  --n-2:  oklch(0.981 0.003 264);
+  --n-3:  oklch(0.962 0.005 264);
+  --n-4:  oklch(0.941 0.007 264);
+  --n-5:  oklch(0.918 0.009 264);
+  --n-6:  oklch(0.892 0.010 264);
+  --n-7:  oklch(0.858 0.012 264);
+  --n-8:  oklch(0.782 0.015 264);
+  --n-9:  oklch(0.556 0.021 264);
+  --n-10: oklch(0.502 0.022 264);
+  --n-11: oklch(0.472 0.020 264);
+  --n-12: oklch(0.232 0.017 264);
+
+  /* Accent — PLACEHOLDER. Deliberately unremarkable. Swap at brand layer. */
+  --a-1:  oklch(0.992 0.004 265);
+  --a-2:  oklch(0.978 0.011 265);
+  --a-3:  oklch(0.955 0.024 265);
+  --a-4:  oklch(0.930 0.038 265);
+  --a-5:  oklch(0.900 0.052 265);
+  --a-6:  oklch(0.860 0.068 265);
+  --a-7:  oklch(0.800 0.090 265);
+  --a-8:  oklch(0.712 0.124 265);
+  --a-9:  oklch(0.492 0.194 265);
+  --a-10: oklch(0.440 0.178 265);
+  --a-11: oklch(0.430 0.165 265);
+  --a-12: oklch(0.272 0.094 265);
+
+  /* Status — abbreviated ramps: bg / border / solid / text */
+  --ok-bg:     oklch(0.955 0.032 152);
+  --ok-border: oklch(0.855 0.070 152);
+  --ok-solid:  oklch(0.520 0.128 152);
+  --ok-text:   oklch(0.430 0.105 152);
+
+  --warn-bg:     oklch(0.968 0.044 78);
+  --warn-border: oklch(0.868 0.096 78);
+  --warn-solid:  oklch(0.720 0.150 78);
+  --warn-text:   oklch(0.455 0.092 78);
+
+  --bad-bg:     oklch(0.960 0.020 25);
+  --bad-border: oklch(0.862 0.062 25);
+  --bad-solid:  oklch(0.545 0.212 25);
+  --bad-text:   oklch(0.478 0.180 25);
+
+  /* Type — font slots. Family is a BRAND decision; these are fallbacks. */
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", "Roboto", sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Mono", "Menlo", "Consolas", monospace;
+  --font-display: var(--font-sans);
+
+  /* Size / leading / tracking are authored as triplets — leading tightens as
+     size grows, tracking goes negative at display sizes. */
+  --text-2xs: 0.6875rem; --leading-2xs: 1.45; --tracking-2xs:  0.010em;
+  --text-xs:  0.75rem;   --leading-xs:  1.50; --tracking-xs:   0.005em;
+  --text-sm:  0.875rem;  --leading-sm:  1.55; --tracking-sm:   0em;
+  --text-base:1rem;      --leading-base:1.60; --tracking-base: 0em;
+  --text-lg:  1.125rem;  --leading-lg:  1.55; --tracking-lg:  -0.005em;
+  --text-xl:  1.25rem;   --leading-xl:  1.45; --tracking-xl:  -0.008em;
+  --text-2xl: 1.5rem;    --leading-2xl: 1.35; --tracking-2xl: -0.012em;
+  --text-3xl: 1.875rem;  --leading-3xl: 1.25; --tracking-3xl: -0.016em;
+  --text-4xl: 2.25rem;   --leading-4xl: 1.15; --tracking-4xl: -0.020em;
+
+  --weight-normal: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+
+  /* Spacing — 4px rhythm */
+  --space-px: 1px;
+  --space-1:  0.25rem;  --space-2:  0.5rem;   --space-3:  0.75rem;
+  --space-4:  1rem;     --space-5:  1.25rem;  --space-6:  1.5rem;
+  --space-8:  2rem;     --space-10: 2.5rem;   --space-12: 3rem;
+  --space-16: 4rem;     --space-20: 5rem;
+
+  /* Radius */
+  --radius-xs: 3px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-full: 9999px;
+
+  /* Motion */
+  --duration-fast: 120ms;
+  --duration-base: 180ms;
+  --duration-slow: 260ms;
+  --ease-out:    cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in:     cubic-bezier(0.55, 0, 1, 0.45);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+/* --------------------------------------------------------------------------
+   TIER 2 — SEMANTIC ROLES (light)
+   -------------------------------------------------------------------------- */
+:root,
+[data-theme="light"] {
+  /* Surfaces. DEPTH POLICY: never nest more than two levels. */
+  --surface-base:    var(--n-1);
+  --surface-raised:  var(--n-2);
+  --surface-sunken:  var(--n-3);
+  --surface-overlay: var(--n-1);
+
+  /* Inverted: near-black on a light page, near-white on a dark one. Tooltips,
+     inverted banners, anything that must read as "not part of this surface".
+     DO NOT redeclare this in the dark block — it is correct in both themes
+     precisely because it is not. var() resolves at use time, so the same
+     var(--n-12) picks up whichever ramp is active, and the ramps invert. */
+  --surface-inverted: var(--n-12);
+
+  /* Text. `secondary` passes AA. `disabled` deliberately does not — it is
+     exempt under WCAG 1.4.3 and must never carry meaning on its own. */
+  --text-primary:   var(--n-12);
+  --text-secondary: var(--n-11);
+  --text-disabled:  var(--n-8);
+
+  /* Text on solid fills. NOT one shared token — which colour wins is a property
+     of each ramp, not a global constant. Warn is near-black because no yellow
+     that still reads as yellow carries white text at 4.5:1. Adding a solid fill
+     means adding its on-colour. */
+  --text-on-interactive: oklch(1 0 0);
+  --text-on-ok:          oklch(1 0 0);
+  --text-on-warn:        var(--n-12);
+  --text-on-bad:         oklch(1 0 0);
+
+  /* Counterpart to --surface-inverted, and inverts with it for the same
+     reason. Not redeclared in the dark block. */
+  --text-on-inverted: var(--n-1);
+
+  /* Borders. THREE roles, and the distinction is load-bearing:
+     subtle/default are decorative and sit below 3:1 by design;
+     strong meets 3:1 and is required for anything conveying state. */
+  --border-subtle:   var(--n-6);
+  --border-default:  var(--n-7);
+  --border-strong:   var(--n-9);
+  --border-width: 1px;
+
+  /* Interactive */
+  --interactive-bg:         transparent;
+  --interactive-bg-hover:   var(--n-4);
+  --interactive-bg-active:  var(--n-5);
+  --interactive-solid:       var(--a-9);
+  --interactive-solid-hover: var(--a-10);
+  --interactive-text:        var(--a-11);
+  --interactive-subtle-bg:   var(--a-3);
+  --interactive-subtle-border: var(--a-7);
+
+  /* Focus */
+  --focus-ring: var(--a-9);
+  --focus-ring-width: 2px;
+  --focus-ring-offset: 2px;
+
+  /* Status */
+  --status-ok-bg: var(--ok-bg);   --status-ok-border: var(--ok-border);
+  --status-ok-solid: var(--ok-solid); --status-ok-text: var(--ok-text);
+  --status-warn-bg: var(--warn-bg); --status-warn-border: var(--warn-border);
+  --status-warn-solid: var(--warn-solid); --status-warn-text: var(--warn-text);
+  --status-bad-bg: var(--bad-bg);  --status-bad-border: var(--bad-border);
+  --status-bad-solid: var(--bad-solid); --status-bad-text: var(--bad-text);
+
+  /* Elevation. Border-first: shadows are for things that FLOAT ONLY.
+     Nothing in normal document flow gets a shadow. */
+  --shadow-popover: 0 1px 2px oklch(0 0 0 / 0.05), 0 4px 12px -2px oklch(0 0 0 / 0.08);
+  --shadow-overlay: 0 1px 2px oklch(0 0 0 / 0.04), 0 12px 32px -6px oklch(0 0 0 / 0.12);
+
+  /* Proximity scale — Gestalt encoded. Each step ~1.6-2x the last, which is
+     what guarantees "space within a group < space around it". */
+  --gap-tight:   var(--space-2);   /*  8  icon <-> label            */
+  --gap-related: var(--space-3);   /* 12  label <-> input           */
+  --gap-item:    var(--space-5);   /* 20  field <-> field           */
+  --gap-group:   var(--space-10);  /* 40  group <-> group           */
+  --gap-section: var(--space-20);  /* 80  section <-> section       */
+
+  /* Measure */
+  --measure-narrow: 46ch;
+  --measure: 68ch;
+  --measure-wide: 80ch;
+
+  /* Controls — "balanced" density */
+  --control-height-sm: 32px;
+  --control-height-md: 36px;
+  --control-height-lg: 44px;
+  --control-pad-x: var(--space-3);
+  --target-min: 44px;  /* Apple HIG. WCAG 2.2 SC 2.5.8 floor is 24px. */
+}
+
+/* --------------------------------------------------------------------------
+   TIER 2 — SEMANTIC ROLES (dark)
+   Only the mapping changes. No component knows this file exists.
+   -------------------------------------------------------------------------- */
+[data-theme="dark"] {
+  --n-1:  oklch(0.176 0.006 264);
+  --n-2:  oklch(0.212 0.008 264);
+  --n-3:  oklch(0.251 0.010 264);
+  --n-4:  oklch(0.284 0.012 264);
+  --n-5:  oklch(0.316 0.013 264);
+  --n-6:  oklch(0.359 0.014 264);
+  --n-7:  oklch(0.421 0.016 264);
+  --n-8:  oklch(0.523 0.018 264);
+  --n-9:  oklch(0.610 0.020 264);
+  --n-10: oklch(0.662 0.019 264);
+  --n-11: oklch(0.764 0.014 264);
+  --n-12: oklch(0.962 0.004 264);
+
+  --a-1:  oklch(0.196 0.024 265);
+  --a-2:  oklch(0.224 0.036 265);
+  --a-3:  oklch(0.272 0.062 265);
+  --a-4:  oklch(0.312 0.084 265);
+  --a-5:  oklch(0.352 0.098 265);
+  --a-6:  oklch(0.402 0.110 265);
+  --a-7:  oklch(0.470 0.130 265);
+  --a-8:  oklch(0.556 0.162 265);
+  --a-9:  oklch(0.596 0.192 265);
+  --a-10: oklch(0.648 0.180 265);
+  --a-11: oklch(0.790 0.128 265);
+  --a-12: oklch(0.930 0.048 265);
+
+  --ok-bg: oklch(0.248 0.048 152); --ok-border: oklch(0.400 0.080 152);
+  --ok-solid: oklch(0.620 0.140 152); --ok-text: oklch(0.800 0.110 152);
+  --warn-bg: oklch(0.262 0.048 78); --warn-border: oklch(0.412 0.080 78);
+  --warn-solid: oklch(0.760 0.150 78); --warn-text: oklch(0.848 0.108 78);
+  --bad-bg: oklch(0.252 0.052 25); --bad-border: oklch(0.410 0.098 25);
+  --bad-solid: oklch(0.620 0.212 25); --bad-text: oklch(0.800 0.124 25);
+
+  /* Solid fills stay vivid in dark mode, so white sits at 3.35-4.16 on the
+     accent and danger ramps — below AA, declared in src/contrast-policy.json.
+     Warn flips to the darkest neutral, which here is n-1, not n-12. */
+  --text-on-interactive: oklch(1 0 0);
+  --text-on-ok:          oklch(1 0 0);
+  --text-on-warn:        var(--n-1);
+  --text-on-bad:         oklch(1 0 0);
+
+  /* Dark surfaces climb, they don't descend. */
+  --surface-base:    var(--n-1);
+  --surface-raised:  var(--n-2);
+  --surface-sunken:  oklch(0.140 0.005 264);
+  --surface-overlay: var(--n-3);
+
+  --shadow-popover: 0 1px 2px oklch(0 0 0 / 0.30), 0 4px 12px -2px oklch(0 0 0 / 0.36);
+  --shadow-overlay: 0 1px 2px oklch(0 0 0 / 0.32), 0 12px 32px -6px oklch(0 0 0 / 0.44);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-fast: 1ms;
+    --duration-base: 1ms;
+    --duration-slow: 1ms;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   TAILWIND v4 BRIDGE (optional)
+   `@theme inline` keeps the var() reference intact rather than resolving it,
+   so runtime overrides (dark mode) still work through the generated utilities.
+   Only Tier 2 is exposed. Primitives stay private on purpose.
+   -------------------------------------------------------------------------- */
+@theme inline {
+  --color-surface-base: var(--surface-base);
+  --color-surface-raised: var(--surface-raised);
+  --color-surface-sunken: var(--surface-sunken);
+  --color-surface-overlay: var(--surface-overlay);
+  --color-surface-inverted: var(--surface-inverted);
+
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-disabled: var(--text-disabled);
+  --color-text-on-inverted: var(--text-on-inverted);
+  --color-text-on-interactive: var(--text-on-interactive);
+  --color-text-on-ok: var(--text-on-ok);
+  --color-text-on-warn: var(--text-on-warn);
+  --color-text-on-bad: var(--text-on-bad);
+
+  --color-border-subtle: var(--border-subtle);
+  --color-border-default: var(--border-default);
+  --color-border-strong: var(--border-strong);
+
+  --color-interactive-solid: var(--interactive-solid);
+  --color-interactive-solid-hover: var(--interactive-solid-hover);
+  --color-interactive-text: var(--interactive-text);
+  --color-interactive-subtle-bg: var(--interactive-subtle-bg);
+  --color-interactive-subtle-border: var(--interactive-subtle-border);
+
+  --color-status-ok-bg: var(--status-ok-bg);
+  --color-status-ok-border: var(--status-ok-border);
+  --color-status-ok-solid: var(--status-ok-solid);
+  --color-status-ok-text: var(--status-ok-text);
+  --color-status-warn-bg: var(--status-warn-bg);
+  --color-status-warn-border: var(--status-warn-border);
+  --color-status-warn-solid: var(--status-warn-solid);
+  --color-status-warn-text: var(--status-warn-text);
+  --color-status-bad-bg: var(--status-bad-bg);
+  --color-status-bad-border: var(--status-bad-border);
+  --color-status-bad-solid: var(--status-bad-solid);
+  --color-status-bad-text: var(--status-bad-text);
+
+  --spacing-tight: var(--gap-tight);
+  --spacing-related: var(--gap-related);
+  --spacing-item: var(--gap-item);
+  --spacing-group: var(--gap-group);
+  --spacing-section: var(--gap-section);
+
+  --radius-xs: var(--radius-xs);
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+  --font-display: var(--font-display);
+}

@@ -21,8 +21,24 @@ than the size of this codebase suggests.
    change.
 4. **All gates pass.** See below. A red gate is not advisory — fix it, or make
    the argument that the rule is wrong and change the rule in the same PR.
-5. A maintainer from `@Widenode/developers` reviews and merges. CI on fork PRs
-   runs with a read-only token and no secrets, by design.
+5. A maintainer from `@Widenode/developers` merges. Merging needs write access,
+   so an outside contribution always passes through one. CI on fork PRs runs
+   with a read-only token and no secrets, by design.
+
+`main` is protected by a ruleset with **no bypass actors** — it applies to org
+admins too. What that enforces:
+
+| Rule | Effect |
+|---|---|
+| Pull request required | Nobody pushes to `main` directly, including maintainers |
+| `lint + a11y` and `visual regression` must pass | Strict — your branch must also be up to date |
+| Conversations must be resolved | No merging over an open thread |
+| No force-push, no deletion | `main` history is append-only |
+
+There is **no required approval count**, deliberately. On a package this size a
+second pair of eyes is usually a rubber stamp, whereas the gate suite genuinely
+cannot be talked round: four checks, none of them bypassable by anyone. If you
+want review on a change, ask for it — the tooling won't force the ceremony.
 
 ## Gates
 

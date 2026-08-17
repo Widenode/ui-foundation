@@ -163,7 +163,7 @@ A text-level backstop catches what an AST linter cannot see — arbitrary Tailwi
 values and Tier 1 references inside template strings:
 
 ```bash
-bash node_modules/@widenode/ui-foundation/scripts/check-tokens.sh src
+node node_modules/@widenode/ui-foundation/scripts/check-tokens.mjs src
 ```
 
 ## Specimen

@@ -15,7 +15,7 @@ Public repo, maintainer-approved merges. Published to npm as
 | `src/adapters/nuxt-ui.css` | Maps Nuxt UI `--ui-*` onto our Tier 2 |
 | `specimen/index.html` | Reference rendering + the test target |
 | `stylelint/index.json` | Shared config consumers extend |
-| `scripts/check-tokens.sh` | Text-level backstop for the Tier 2 rule |
+| `scripts/check-tokens.mjs` | Text-level backstop for the Tier 2 rule |
 
 **This is the only repo where Tier 1 primitives (`--n-*`, `--a-*`) live.**
 Consuming apps override them in their own `brand.css` and nowhere else.

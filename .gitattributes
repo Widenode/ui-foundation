@@ -1,6 +1,6 @@
-# Normalise to LF. scripts/check-tokens.sh runs under bash in Linux CI, and a
-# CRLF shebang fails there with a confusing "bad interpreter" error. This repo
-# is authored on Windows, so leaving it to chance is not an option.
+# Normalise to LF. Shell and Node scripts with a CRLF shebang fail on Linux
+# with a confusing "bad interpreter" error, and this repo is authored on
+# Windows, so leaving it to chance is not an option.
 * text=auto eol=lf
 
 # Screenshot baselines are committed artifacts and byte-compared by Playwright.

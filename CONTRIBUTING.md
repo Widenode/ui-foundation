@@ -38,8 +38,10 @@ npm run lint && npm run test:a11y && npm run test:visual
 | `test:contrast` | `src/contrast-policy.json` asserted pair by pair, in both themes |
 | `test:visual` | Screenshot diff of the specimen at 390px and 1280px, both themes |
 
-CI runs `lint`, `test:a11y` and `test:contrast` on every pull request.
-`test:visual` runs at release time (see below).
+CI runs all four on every pull request. `test:visual` runs as its own job,
+pinned to the Playwright image the baselines were generated in — same OS is not
+the same environment, and screenshot comparison is the one gate sensitive to
+font rendering.
 
 ### The contrast policy
 

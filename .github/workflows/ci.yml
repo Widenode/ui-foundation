@@ -64,10 +64,37 @@ jobs:
           path: playwright-report/
           retention-days: 7
 
-# NOTE — test:visual is not run here.
-# Screenshot baselines are OS- and image-specific: the committed ones must be
-# generated in the same environment CI renders in. Until Linux baselines exist
-# under tests/**/__screenshots__, adding a visual job here would fail every PR.
-# release.yml already runs the full `verify` (including visual) via `prepack`,
-# inside the pinned Playwright image — that is the environment to generate them
-# in. See CONTRIBUTING.md.
+  visual:
+    name: visual regression
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    # Separate job, and pinned to the image the baselines were generated in.
+    # Screenshot comparison is the one gate that is sensitive to font rendering,
+    # so it cannot share the bare ubuntu-latest runner the job above uses —
+    # same OS is not the same environment. Keep this tag in lockstep with
+    # @playwright/test, release.yml and visual-baselines.yml.
+    container: mcr.microsoft.com/playwright:v1.62.1-noble
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Visual regression
+        run: npm run test:visual
+
+      - name: Upload diff report
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-report-visual
+          path: playwright-report/
+          retention-days: 7

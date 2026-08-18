@@ -5,7 +5,31 @@ Consumed by any component methodology; knows nothing about components.
 
 ---
 
+## How to read this
+
+Two kinds of statement live in this document, and telling them apart is the
+difference between a check and an argument.
+
+**[enforced]** — a gate fails if you break it, and the gate is named. Not open
+to negotiation in review: change the rule and its check together, or change
+neither.
+
+**[default]** — the starting point, and the reasoning behind it. **Nothing
+checks it.** Deviate when the content justifies it — a proof of concept, a
+debugging view, a deliberate exception. If you find yourself deviating
+everywhere, the default is probably wrong: raise it then, not before.
+
+Anything unmarked is description rather than instruction.
+
+An unenforced preference stated in the same voice as an enforced constraint is
+how a spec becomes a source of friction. If something below is marked wrong,
+that is a bug in this document.
+
+---
+
 ## The one rule
+
+**[enforced — `lint:css`, `lint:tokens`]**
 
 **Components reference Tier 2 semantic tokens only.** Never a Tier 1 primitive
 (`--n-7`, `--a-9`), never a raw value (`#666`, `12px`, `p-[13px]`).
@@ -41,14 +65,19 @@ boundary that *conveys information*.
 
 - `--border-subtle` — dividers, decorative edges. Below 3:1 by design.
 - `--border-default` — panel and card edges. Below 3:1 by design.
-- `--border-strong` — **required** for form controls, selected state, and
-  anything a user must perceive to operate. Meets 3:1.
+- `--border-strong` — for form controls, selected state, and anything a user
+  must perceive to operate. Meets 3:1.
+
+**[enforced — `test:contrast`]** that `--border-strong` clears 3:1 against both
+surfaces in both themes. **[default]** that you reach for it in those places —
+no check can tell which of your borders conveys information.
 
 This is the most common way a flat hairline aesthetic fails an audit.
 
-`--text-disabled` deliberately fails AA. Disabled controls are exempt under
-WCAG 1.4.3, but the corollary is absolute: **disabled state must never be the
-only carrier of meaning.**
+`--text-disabled` deliberately fails AA — **[enforced — `test:contrast`]** as a
+declared exemption. Disabled controls are exempt under WCAG 1.4.3, and the
+corollary is **[default]**, because no tool can check it: **disabled state
+should never be the only carrier of meaning.**
 
 ### Text on solid fills
 
@@ -67,6 +96,10 @@ So each solid fill names its own text colour:
 | `--text-on-ok` | `--status-ok-solid` |
 | `--text-on-warn` | `--status-warn-solid` |
 | `--text-on-bad` | `--status-bad-solid` |
+
+**[enforced — `test:contrast`]** for every pairing listed in
+`src/contrast-policy.json`. A *new* solid fill is only covered once its pairing
+is added there — which is the process the policy exists to force.
 
 Only `--text-on-warn` is near-black; the rest are white. Adding a solid fill
 means adding its on-colour, and that is the point — the pairing becomes
@@ -94,16 +127,20 @@ cannot adapt to one that can.
 
 ## Type
 
+**[default]** throughout — none of this is checked. It is judgement with
+reasons attached.
+
 Size, leading and tracking are authored as triplets. Leading tightens as size
-grows; tracking goes negative at display sizes. Never mix a size from one step
-with the leading of another.
+grows; tracking goes negative at display sizes. Mixing a size from one step with
+the leading of another undoes that, and generally looks wrong.
 
 - Measure: `--measure` (68ch) for prose, `--measure-narrow` (46ch) for
-  supporting copy in narrow columns. Never let prose run full width.
+  supporting copy in narrow columns. Prose running full width is hard to read at
+  any size.
 - Font family is a **brand-layer slot**. `--font-sans` / `--font-display` /
   `--font-mono` are declared here with system fallbacks and swapped at brand.
-- Tabular numerals (`font-variant-numeric: tabular-nums`) on every numeric
-  column. Non-negotiable in data views.
+- Tabular numerals (`font-variant-numeric: tabular-nums`) on numeric columns.
+  Without them digits shift width and the column visibly jitters.
 
 ---
 
@@ -127,11 +164,17 @@ which makes it checkable.
 
 Reach for the relationship token, not the raw `--space-*` value.
 
+**[enforced — `lint:css`]**, but only on `gap`, `row-gap`, `column-gap`,
+`margin-top` and `margin-bottom`. A raw `--space-*` in `padding` or a `margin`
+shorthand passes today. That is a gap in the check, not permission.
+
 ---
 
 ## Depth — nesting policy
 
-**A default, not a gate: start with at most two nested surfaces.**
+**[default]**
+
+**Start with at most two nested surfaces.**
 
 | Level | Default treatment |
 |---|---|
@@ -162,6 +205,11 @@ restarts inside it.
 
 ## Elevation
 
+**[enforced — `lint:css`, `lint:tokens`]** that a shadow is one of the two
+tokens: raw `box-shadow` values and Tailwind `shadow-*` classes are both
+rejected. **[default]** that only floating things get one — no check knows
+whether your element floats.
+
 Border-first: **shadow means "floats above the page".** Nothing in normal
 document flow gets a shadow — grouping is done with borders and whitespace.
 
@@ -175,20 +223,25 @@ Only `--shadow-popover` (dropdowns, tooltips, popovers) and `--shadow-overlay`
 Defined once so nothing invents its own: `default`, `hover`, `active`,
 `focus-visible`, `disabled`, `error`, `loading`, `empty`.
 
-- **Focus is a ring, not a border change.** In a border-first system a colour-only
-  border swap is too quiet to serve as focus. 2px, 2px offset, `--focus-ring`.
-- Minimum touch target `--target-min` (44px). WCAG 2.2 SC 2.5.8 floor is 24px;
-  44px is the Apple HIG figure and the better default.
-- Empty states get a title, one line of orientation, and one action. An empty
-  screen is an invitation to act, not an apology.
+- **[default]** **Focus is a ring, not a border change.** In a border-first
+  system a colour-only border swap is too quiet to serve as focus. 2px, 2px
+  offset, `--focus-ring`. The ring's 3:1 contrast is
+  **[enforced — `test:contrast`]**; using a ring at all is not.
+- **[default]** Minimum touch target `--target-min` (44px). `test:a11y` enforces
+  the WCAG 2.2 SC 2.5.8 floor of 24px, not 44 — the larger figure is the Apple
+  HIG number and the better default, but only the smaller one is checked.
+- **[default]** Empty states get a title, one line of orientation, and one
+  action. An empty screen is an invitation to act, not an apology.
 
 ---
 
 ## Motion
 
+**[default]**, except the reduced-motion handling below, which is automatic.
+
 Durations 120 / 180 / 260ms. Enter decelerates (`--ease-out`), exit accelerates
 (`--ease-in`). Animate `background`, `border-color`, `color`, `opacity`,
-`transform` — nothing that triggers layout.
+`transform` — animating anything that triggers layout will jank.
 
 `prefers-reduced-motion` collapses all durations to 1ms in `tokens.css`. It is
 handled at the token layer, so components get it for free and cannot forget it.
@@ -197,7 +250,10 @@ handled at the token layer, so components get it for free and cannot forget it.
 
 ## Layout hints that constrain markup
 
-These look like style but bind what markup a renderer may emit — decide once:
+**[default]** throughout — none of this is checked. It is recorded because
+these decisions bind what markup a renderer emits, and deciding once is cheaper
+than deciding per component. A renderer that deliberately does otherwise is
+fine; one that does otherwise by accident is drift.
 
 - **Grouping is border-first.** Groups get a bordered container, not a shadowed
   card and not a tinted background. A renderer emitting a group emits a border.
@@ -215,6 +271,8 @@ This layer does not chase 100% AA. A foundation that did would be limited to the
 palette that survives the strictest reading of every success criterion, and it
 would look it. What it does instead is make every deviation **declared** rather
 than accidental, and machine-checked either way.
+
+**[enforced — `test:contrast`]** for every pair in the manifest.
 
 `src/contrast-policy.json` is the manifest: every pair that matters, the ratio
 required of it, and — where that ratio is below AA — why. `tests/contrast.spec.ts`
@@ -247,15 +305,25 @@ document leans on hardest.
 
 ## Enforcement
 
-Most of Tier 1 is machine-checkable, so it should not consume review attention:
+Five gates run in CI on every pull request. This is the complete list — if a
+statement above is marked **[enforced]**, one of these is what enforces it.
 
-- `axe-core` via Playwright in CI — contrast, target size, ARIA, focus order
-- `eslint-plugin-vuejs-accessibility`
-- Lint rule banning arbitrary Tailwind values (`p-[13px]`)
-- Lint rule banning Tier 1 primitives and raw hex outside `tokens.css`
+| Gate | Covers |
+|---|---|
+| `lint:css` | stylelint: raw hex, non-token colour and `box-shadow` values, Tier 1 primitives outside the files allowed to declare them, raw `--space-*` on gap and vertical-margin properties |
+| `lint:tokens` | `check-tokens.mjs`: arbitrary Tailwind values (`p-[13px]`), raw hex, Tier 1 references, direct `--ui-*` use, Tailwind `shadow-*` classes — including inside template strings, which an AST linter cannot see |
+| `test:a11y` | axe-core over the specimen in both themes: WCAG 2.0 / 2.1 / 2.2 A and AA — ARIA, focus order, target size at the 24px floor |
+| `test:contrast` | `src/contrast-policy.json` asserted pair by pair in both themes, including pairs no component renders yet |
+| `test:visual` | Screenshot diff of the specimen, two viewports, both themes |
 
-Review is then only Tier 3: does this look and feel right. That is the only
-part that needs a human.
+**What is not enforced:** everything marked **[default]**. Type pairing,
+measure, tabular numerals, nesting depth, whether a shadow belongs on the thing
+you put it on, whether a given border conveys information, alignment, label
+placement, truncation, empty-state shape. Judgement calls with reasons recorded,
+not gates.
+
+Human review is then Tier 3 — does this look and feel right — plus those
+judgement calls. That is the part that actually needs a person.
 
 ---
 

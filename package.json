@@ -1,6 +1,6 @@
 {
   "name": "@widenode/ui-foundation",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Brand-agnostic design token foundation. Vanilla CSS custom properties, OKLCH ramps, border-first. No framework, no build step.",
   "license": "MIT",
   "type": "module",
@@ -36,6 +36,7 @@
     "stylelint",
     "scripts",
     "specimen",
+    "INTEGRATION.md",
     "RULES.md"
   ],
   "exports": {
@@ -45,6 +46,7 @@
     "./stylelint": "./stylelint/index.json",
     "./scripts/check-tokens.mjs": "./scripts/check-tokens.mjs",
     "./RULES.md": "./RULES.md",
+    "./INTEGRATION.md": "./INTEGRATION.md",
     "./package.json": "./package.json"
   },
   "dependencies": {

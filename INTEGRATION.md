@@ -34,16 +34,21 @@ nothing else — no reset, no utilities. Switch themes by setting
 
 ---
 
-## 3. Nuxt + Nuxt UI + Tailwind v4
+## 3. Nuxt UI — Nuxt *or* plain Vue + Vite
 
-Verified against Nuxt UI 4.10. If their scaffold has moved, their docs win —
-check the token names in
-`node_modules/@widenode/ui-foundation/src/adapters/nuxt-ui.css`, which lists
-what is mapped and what deliberately is not.
+Nuxt UI runs in both, and this package needs the same two things either way:
+
+1. the stylesheet imports, in order, unlayered
+2. `[data-theme]` on `<html>` kept in sync with Nuxt UI's `.dark` class
+
+Only the wiring differs. Verified against Nuxt UI 4.10; if their scaffold has
+moved, their docs win — the token names are listed in
+`node_modules/@widenode/ui-foundation/src/adapters/nuxt-ui.css`, which also
+records what is deliberately not mapped.
 
 ### 3.1 Stylesheet — order matters
 
-`app/assets/css/main.css`:
+`app/assets/css/main.css` on Nuxt, `src/assets/css/main.css` on Vite:
 
 ```css
 @import "tailwindcss";
@@ -61,7 +66,43 @@ in the same layer and hands the decision back to source order.
 ### 3.2 Theme attribute — the thing that will bite you
 
 Nuxt UI toggles a `.dark` **class**. This package keys on a `[data-theme]`
-**attribute**. CSS cannot set an attribute, so the app must drive both. In
+**attribute**. CSS cannot set an attribute, so the app has to keep them in
+sync. Skip it and `.dark` flips while the ramps stay light — the whole system
+silently renders in light mode. **It is the first thing to check** when dark
+mode "doesn't work".
+
+**The portable way**, independent of which colour-mode library is in play —
+`src/theme-sync.ts`:
+
+```ts
+/**
+ * Mirrors Nuxt UI's `.dark` class onto [data-theme], which is what
+ * @widenode/ui-foundation keys on. Observes the class rather than assuming a
+ * particular composable, so it survives Nuxt UI or VueUse changing how they
+ * store the mode. Client-side only.
+ */
+export function syncTheme() {
+  const el = document.documentElement
+  const apply = () => {
+    el.dataset.theme = el.classList.contains('dark') ? 'dark' : 'light'
+  }
+  apply()
+  new MutationObserver(apply).observe(el, {
+    attributes: true,
+    attributeFilter: ['class'],
+  })
+}
+```
+
+Call it once before mount, in `src/main.ts`:
+
+```ts
+import { syncTheme } from './theme-sync'
+syncTheme()
+```
+
+**On Nuxt**, prefer driving the attribute from the mode directly — it renders
+server-side, so there is no flash of the wrong theme on first paint. In
 `app.vue`:
 
 ```vue
@@ -71,9 +112,7 @@ useHead({ htmlAttrs: { 'data-theme': () => mode.value } })
 </script>
 ```
 
-Skip this and `.dark` flips while the ramps stay light — the whole system
-silently renders in light mode. **It is the first thing to check** when dark
-mode "doesn't work".
+The MutationObserver version works on Nuxt too, but only after hydration.
 
 ### 3.3 What the adapter does and does not cover
 
@@ -88,6 +127,34 @@ and their 0.25rem default already yields our scale), `--ui-container` and
 `--ui-primary` and its five siblings are **hooks Nuxt UI references but never
 defines**. Without the adapter they resolve to nothing rather than falling back
 to a default — a loud failure, which is the point.
+
+### 3.4 Vue + Vite specifics
+
+Nuxt UI's own setup, for reference — none of it is this package's concern
+beyond where the stylesheet goes:
+
+```bash
+npm install @nuxt/ui tailwindcss
+```
+
+```ts
+// vite.config.ts
+import ui from '@nuxt/ui/vite'
+export default defineConfig({ plugins: [vue(), ui()] })
+```
+
+```ts
+// src/main.ts — import the stylesheet before anything else
+import './assets/css/main.css'
+import ui from '@nuxt/ui/vue-plugin'
+import { syncTheme } from './theme-sync'
+
+syncTheme()
+createApp(App).use(router).use(ui).mount('#app')
+```
+
+`App.vue` must wrap the tree in `<UApp>` for toasts and tooltips to work. The
+stylesheet in 3.1 is the same file, at `src/assets/css/main.css`.
 
 ---
 

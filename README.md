@@ -86,8 +86,9 @@ A few of these carry decisions worth knowing before you use them:
   *around* it. Reach for these, not the raw `--space-*` values.
 - **Shadow means "floats above the page."** There is no `--shadow-card`,
   deliberately. Grouping is done with borders and whitespace.
-- **Never nest more than two surfaces.** Level 3+ uses a left rule and indent,
-  or drills into its own view.
+- **Depth changes treatment, not structure.** Two nested surfaces by default,
+  then a left rule and indent. A starting point, not a gate — nothing enforces
+  it, and arbitrary nesting is expected.
 - **Each solid fill names its own text colour.** Whether white or near-black
   wins is a property of the ramp, not a global constant — no yellow that still
   reads as yellow carries white text at 4.5:1.
@@ -113,6 +114,9 @@ Font families are deliberately a brand-layer slot. The shipped stack is system
 fallbacks.
 
 ## Nuxt UI adapter
+
+Works with Nuxt UI on Nuxt *or* on plain Vue + Vite; the full recipe for both is
+in [`INTEGRATION.md`](INTEGRATION.md).
 
 Maps Nuxt UI v4's `--ui-*` layer onto Tier 2, so Nuxt UI becomes a consumer of
 this system rather than a parallel one. It creates no dependency on Nuxt UI,

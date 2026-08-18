@@ -131,16 +131,32 @@ Reach for the relationship token, not the raw `--space-*` value.
 
 ## Depth — nesting policy
 
-**Never nest more than two surfaces.**
+**A default, not a gate: start with at most two nested surfaces.**
 
-| Level | Treatment |
+| Level | Default treatment |
 |---|---|
 | 1 | `--surface-base` + border |
 | 2 | `--surface-raised` + border |
 | 3+ | No surface. Left rule + indent, or drill into its own view. |
 
-This is the rule that matters most for any future data-driven renderer, because
-a tree renderer *is* depth. Without it, deep structures become nested-panel hell.
+The reasoning: every border costs horizontal space, and past roughly three
+levels stacked panels stop reading as hierarchy and start reading as mush.
+Rule-and-indent scales to any depth, which is what usable tree views converge
+on. So that is where to start.
+
+**This constrains treatment, not depth, and nothing enforces it.** No lint rule
+and no test checks nesting — unlike the Tier 2 rule, which is machine-checked
+precisely because it is non-negotiable. Arbitrary nesting is expected; a tree
+renderer *is* depth.
+
+There are good reasons to ignore the default. A proof of concept that shows
+recursion literally rather than calmly. A debugging view or data inspector where
+the structure *is* the content. Deep bordered nesting is ugly and clear, and
+sometimes clear wins. Build it. If it starts spreading beyond the place it was
+meant for, that is the moment to revisit — not before.
+
+An overlay — modal, drawer, popover — starts a new surface context, so the count
+restarts inside it.
 
 ---
 

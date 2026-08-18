@@ -174,10 +174,15 @@ people get them wrong:
 4. **Shadow means "floats above the page."** Popovers and overlays only. There
    is no card shadow, deliberately; grouping is done with borders and space.
 5. **Focus is a ring, not a border change.**
-6. **Depth changes treatment, not structure.** Two nested surfaces maximum;
-   deeper nesting uses a left rule and indent. Arbitrary depth is fine.
-7. **Disabled state must never be the only carrier of meaning.**
+6. **Disabled state must never be the only carrier of meaning.**
    `--text-disabled` deliberately fails AA.
+
+### Defaults you can override
+
+Distinct from the above, which are enforced. **Depth:** start with two nested
+surfaces and switch to left-rule-and-indent below that — but nothing checks it,
+arbitrary nesting is expected, and a view where the structure *is* the content
+may reasonably ignore it. See the depth section of `RULES.md`.
 
 ---
 

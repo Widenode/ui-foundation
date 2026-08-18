@@ -33,6 +33,10 @@ watched for.
 npm install @widenode/ui-foundation
 ```
 
+Wiring it into a real app — Nuxt UI, brand overrides, lint enforcement — is in
+[`INTEGRATION.md`](INTEGRATION.md). It ships with the package, so it is on disk
+at `node_modules/@widenode/ui-foundation/INTEGRATION.md`.
+
 ```css
 @import "@widenode/ui-foundation/tokens.css";
 ```

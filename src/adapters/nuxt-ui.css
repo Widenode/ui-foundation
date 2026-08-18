@@ -7,23 +7,30 @@
  * stylesheet that happens to assign the custom-property names Nuxt UI reads.
  * Loading it without Nuxt UI present is inert.
  *
- * Token names were taken from Nuxt UI v4's CSS-variables documentation
- * (ui.nuxt.com/docs/getting-started/theme/css-variables), not from memory.
- * Re-check them on every Nuxt UI major — a renamed --ui-* token fails silently
- * to `unset`, which is exactly what the visual regression suite is there for.
+ * Token names came from Nuxt UI's CSS-variables documentation, then were
+ * checked against the shipped package at 4.10.0: every --ui-* it defines or
+ * references is either mapped below or listed as unmapped at the foot of this
+ * file, with nothing unaccounted for. Re-check on every Nuxt UI major — a
+ * renamed --ui-* token fails silently to `unset`, which is exactly what the
+ * visual regression suite exists to catch.
  *
  * ---------------------------------------------------------------------------
- * USAGE — order matters
+ * USAGE
  *
  *   @import "tailwindcss";
  *   @import "@nuxt/ui";
  *   @import "@widenode/ui-foundation/tokens.css";
  *   @import "@widenode/ui-foundation/adapters/nuxt-ui.css";   <- last
  *
- * Nuxt UI declares its defaults on `:root` and `.dark`, both of which this
- * file also targets. `:root` ties Nuxt UI's `:root` on specificity, so source
- * order decides — import this last. The `:root.dark` selector is deliberately
- * more specific than Nuxt UI's bare `.dark`, so dark mode wins regardless.
+ * Import order is belt-and-braces, not load-bearing. Verified against Nuxt UI
+ * 4.10.0: it declares every --ui-* inside `@layer theme`, and this file is
+ * unlayered — and unlayered styles beat layered ones in the cascade regardless
+ * of source order or specificity. So the mapping wins even if imported first.
+ * Keep it last anyway; it costs nothing and survives Nuxt UI moving off layers.
+ *
+ * One consequence worth knowing: DO NOT wrap this import in a layer. Writing
+ * `@import "..." layer(theme)` puts it in the same layer as Nuxt UI's defaults
+ * and hands the decision back to source order.
  *
  * ---------------------------------------------------------------------------
  * THEME ATTRIBUTE — the one thing this file cannot fix
@@ -42,8 +49,9 @@
  * WHY THE MAPPING IS ONE BLOCK
  *
  * Every value below is a Tier 2 token, and Tier 2 already re-points itself per
- * theme. So there is exactly one mapping, not a light one and a dark one — the
- * selector list only exists to out-rank Nuxt UI's own `.dark` declarations.
+ * theme. So there is exactly one mapping, not a light one and a dark one. The
+ * `.dark` selectors in the list are redundant given the layer rule above, and
+ * kept only so this file still behaves if it is ever pulled into a layer.
  */
 
 :root,
@@ -53,8 +61,15 @@
      Colour aliases
 
      Nuxt UI exposes six. We have one accent ramp plus three status ramps, so
-     two of the six are compromises rather than mappings — see the header notes
-     in the release report and the "unmapped" list at the foot of this file.
+     two of the six are compromises rather than mappings — see the "unmapped"
+     list at the foot of this file.
+
+     These six behave differently from everything else here. Verified against
+     4.10.0: Nuxt UI *references* var(--ui-primary) and friends but never
+     defines them — they are hooks the consuming app is expected to fill. So
+     these assignments are not overrides, they are the integration point. Drop
+     this file and they resolve to nothing rather than falling back to Nuxt
+     UI's green, which at least makes the mistake loud.
      ------------------------------------------------------------------------ */
   --ui-primary: var(--interactive-solid);
 
@@ -77,10 +92,10 @@
   /* ------------------------------------------------------------------------
      Text
 
-     Nuxt UI has six steps; we have four, one of which (`--text-on-solid`) is
-     not part of the dim→bright axis. `toned` and `highlighted` therefore
-     collapse onto their neighbours. Collapsing is safe in the direction we
-     collapse: both merge toward MORE contrast, never less.
+     Nuxt UI has six steps on the dim→bright axis; we have three
+     (`--text-disabled`, `--text-secondary`, `--text-primary`), so `toned` and
+     `highlighted` collapse onto their neighbours. Collapsing is safe in the
+     direction we collapse: both merge toward MORE contrast, never less.
      ------------------------------------------------------------------------ */
   --ui-text-dimmed: var(--text-disabled);
   --ui-text-muted: var(--text-secondary);
@@ -98,9 +113,8 @@
      lands at 6.40 / 4.56 (light / dark) on --interactive-solid and 7.98 / 5.65
      on its hover, so all four clear AA. Ironically that makes Nuxt UI's solid
      buttons stricter than our own, which sit on a declared 3:1 floor in dark.
-     A consumer who uses no inverted
-     surfaces anywhere can force parity with
-     `--ui-text-inverted: var(--text-on-interactive)`. */
+     A consumer who uses no inverted surfaces anywhere can force parity
+     with `--ui-text-inverted: var(--text-on-interactive)`. */
   --ui-text-inverted: var(--text-on-inverted);
 
   /* ------------------------------------------------------------------------

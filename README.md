@@ -7,8 +7,8 @@ This package is the **visual spec** for Widenode UI, expressed as tokens a
 machine can check. [`RULES.md`](RULES.md) is the durable asset; everything else
 serves it.
 
-> **Status: 0.1.0, pre-release.** Tier 2 token names are not yet stable. Pin an
-> exact version until 1.0.
+> **Status: pre-1.0.** Tier 2 token names are not yet stable, and removing or
+> renaming one is breaking even on a 0.x bump. Pin an exact version until 1.0.
 
 ---
 

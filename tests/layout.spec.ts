@@ -168,3 +168,70 @@ test('the scrollbar gutter is reserved', async ({ page }) => {
 
   expect(gutter, 'scrollbar-gutter on the root element').toBe('stable')
 })
+
+test('icons are sized from their label, not in pixels', async ({ page }) => {
+  await page.goto(ROUTE)
+
+  const offenders = await page.evaluate(() => {
+    // 1em is the rule. The window allows a deliberate nudge but rejects the
+    // real failure: markup pasted with width="20"/"24" beside 11-14px text,
+    // which lands at 1.4x-2.2x.
+    const MIN = 0.85
+    const MAX = 1.25
+    const bad: string[] = []
+
+    for (const icon of document.querySelectorAll<SVGElement>('svg')) {
+      const parent = icon.parentElement
+      if (!parent) continue
+      const hasLabel = [...parent.childNodes].some(
+        (n) => n.nodeType === Node.TEXT_NODE && n.textContent!.trim().length > 0,
+      )
+      if (!hasLabel) continue // icon-only controls are covered by the next test
+
+      const font = parseFloat(getComputedStyle(parent).fontSize)
+      const size = icon.getBoundingClientRect().height
+      if (!font || !size) continue
+
+      const ratio = size / font
+      if (ratio < MIN || ratio > MAX) {
+        bad.push(
+          `${parent.className || parent.tagName} — ${size.toFixed(1)}px icon on ` +
+            `${font.toFixed(1)}px label (${ratio.toFixed(2)}x)`,
+        )
+      }
+    }
+    return [...new Set(bad)]
+  })
+
+  expect(offenders, 'icons not sized from their label').toEqual([])
+})
+
+test('icon-only controls meet the minimum target size', async ({ page }) => {
+  await page.goto(ROUTE)
+
+  const offenders = await page.evaluate(() => {
+    // Their accessible name is not checked here — axe already reports a
+    // nameless button as a critical `button-name` violation.
+    const target = parseFloat(
+      getComputedStyle(document.documentElement).getPropertyValue('--target-min'),
+    )
+    const bad: string[] = []
+
+    for (const el of document.querySelectorAll<HTMLElement>('button, a[href], [role="button"]')) {
+      const icon = el.querySelector('svg')
+      if (!icon) continue
+      if (el.textContent && el.textContent.trim().length) continue // has a label
+
+      const r = el.getBoundingClientRect()
+      if (r.width + 0.5 < target || r.height + 0.5 < target) {
+        bad.push(
+          `${el.getAttribute('aria-label') || el.className} — ` +
+            `${r.width.toFixed(0)}x${r.height.toFixed(0)}px, below --target-min ${target}px`,
+        )
+      }
+    }
+    return [...new Set(bad)]
+  })
+
+  expect(offenders, 'icon-only controls below --target-min').toEqual([])
+})

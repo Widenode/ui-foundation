@@ -272,10 +272,36 @@ fine; one that does otherwise by accident is drift.
   **[enforced — `test:layout`]**
 - **An icon paired with a label centres on the label, never on the baseline.**
   **[enforced — `test:layout`]** The pair is a flex container with
-  `align-items: center` and `--gap-tight` between; the icon is `display: block`
-  and sized in `em`. An inline SVG defaults to baseline alignment, which puts
-  its bottom edge on the baseline and leaves it riding visibly low. This applies
+  `align-items: center` and `--gap-tight` between, and the icon is
+  `display: block`. An inline SVG defaults to baseline alignment, which puts its
+  bottom edge on the baseline and leaves it riding visibly low. This applies
   inside a control and outside one — anywhere an icon sits beside text.
+- **Icons are sized in `em`, never in pixels.** **[enforced — `test:layout`]**
+  An icon beside a label is `1em`, so it tracks that label through every size,
+  theme and brand swap without anyone maintaining the relationship.
+
+  *There is deliberately no `--icon-size` token.* A parallel icon scale is one
+  more thing that can drift out of step with the type scale; a derived size
+  cannot. The same reasoning as the proximity scale — encode the relationship,
+  not the number.
+
+  **The caveat that bites: `1em` assumes artwork with optical padding inside its
+  viewBox.** Measured across this package's own icons, the artwork fills between
+  67% and 87% of the box — a check mark is inherently smaller than a warning
+  triangle. Sets are drawn so that varying fill still reads as even optical
+  weight, which is why **using one icon set is part of the rule**. Drop in a
+  glyph that bleeds to its viewBox edge and it will look oversized at exactly
+  the same `1em`, and no gate will tell you.
+- **An icon-only control is a different thing and needs three answers.**
+  It has no label to size against, and nothing for a screen reader to read.
+  - Size the icon as a deliberate multiple of the control's own font-size —
+    still `em`, still derived, never a raw pixel value.
+  - Give it the full `--target-min` square. **[enforced — `test:layout`]** A
+    control whose entire affordance is a small glyph is the one that can least
+    afford a small hit area.
+  - Give it an accessible name; the icon itself stays `aria-hidden`.
+    **[enforced — `test:a11y`]** — axe reports a nameless button as a critical
+    `button-name` violation.
 - **Reserve the scrollbar gutter** (`scrollbar-gutter: stable` on the root).
   **[enforced — `test:layout`]** Otherwise a centred layout shifts horizontally
   the moment content grows past one viewport, so moving between a short page and

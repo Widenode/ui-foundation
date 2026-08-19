@@ -269,6 +269,16 @@ fine; one that does otherwise by accident is drift.
   header cell takes the alignment of **its own column** — a right-aligned number
   under a left-aligned header is the most common way this is done wrong.
   **[enforced — `test:layout`]**
+- **An icon paired with a label centres on the label, never on the baseline.**
+  **[enforced — `test:layout`]** The pair is a flex container with
+  `align-items: center` and `--gap-tight` between; the icon is `display: block`
+  and sized in `em`. An inline SVG defaults to baseline alignment, which puts
+  its bottom edge on the baseline and leaves it riding visibly low. This applies
+  inside a control and outside one — anywhere an icon sits beside text.
+- **Reserve the scrollbar gutter** (`scrollbar-gutter: stable` on the root).
+  **[enforced — `test:layout`]** Otherwise a centred layout shifts horizontally
+  the moment content grows past one viewport, so moving between a short page and
+  a long one makes the whole interface twitch.
 - **Truncate with a title attribute; never wrap in table cells.**
 
 ---

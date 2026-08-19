@@ -94,3 +94,77 @@ test('single-line controls do not inherit prose leading', async ({ page }) => {
 
   expect(offenders, 'controls inheriting prose leading').toEqual([])
 })
+
+test('icons paired with a label centre on the label', async ({ page }) => {
+  await page.goto(ROUTE)
+
+  const offenders = await page.evaluate(() => {
+    const bad: string[] = []
+
+    for (const icon of document.querySelectorAll<SVGElement>('svg')) {
+      const parent = icon.parentElement
+      if (!parent) continue
+
+      // Only pairs: an icon sitting beside actual text.
+      const textNode = [...parent.childNodes].find(
+        (n) => n.nodeType === Node.TEXT_NODE && n.textContent!.trim().length > 0,
+      )
+      if (!textNode) continue
+
+      const name = parent.className || parent.tagName.toLowerCase()
+      const cs = getComputedStyle(parent)
+
+      // Assert the cause, not the symptom. Measuring the drift directly is a
+      // trap: baseline alignment on an 11px label moves the icon by exactly
+      // 1.0px, which is too small to separate from subpixel noise, and the
+      // error shrinks further as the icon approaches the label's height. The
+      // stated rule is a flex container centring its items, so check that.
+      if (!/flex/.test(cs.display)) {
+        bad.push(`${name} — icon+label parent is display:${cs.display}, not flex`)
+        continue
+      }
+      if (cs.alignItems !== 'center') {
+        bad.push(`${name} — align-items:${cs.alignItems}, so the icon rides off the label`)
+        continue
+      }
+
+      // An inline SVG sits its bottom edge on the baseline. Flex blockifies its
+      // children, so this only fires for non-flex parents — which the check
+      // above has already rejected. Kept for when that rule is relaxed.
+      if (getComputedStyle(icon).display === 'inline') {
+        bad.push(`${name} — icon is display:inline`)
+        continue
+      }
+
+      // Backstop for gross errors only, measured against the LABEL rather than
+      // the container: mis-aligning the icon grows the container, which moves
+      // its centre too and cancels the error out.
+      const range = document.createRange()
+      range.selectNodeContents(textNode)
+      const t = range.getBoundingClientRect()
+      range.detach()
+      if (!t.height) continue
+
+      const i = icon.getBoundingClientRect()
+      const drift = Math.abs((i.top + i.bottom) / 2 - (t.top + t.bottom) / 2)
+      if (drift > 2) {
+        bad.push(`${name} — icon centre ${drift.toFixed(1)}px off its label`)
+      }
+    }
+    return [...new Set(bad)]
+  })
+
+  expect(offenders, 'icons not centred on their label').toEqual([])
+})
+
+test('the scrollbar gutter is reserved', async ({ page }) => {
+  await page.goto(ROUTE)
+
+  // Without this, a centred layout jumps sideways the moment a page grows past
+  // one viewport — so navigating between a short and a long page twitches.
+  const gutter = await page.evaluate(
+    () => getComputedStyle(document.documentElement).scrollbarGutter,
+  )
+
+  expect(gutter, 'scrollbar-gutter on the root element').toBe('stable')
+})

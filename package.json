@@ -1,6 +1,6 @@
 {
   "name": "@widenode/ui-foundation",
-  "version": "0.1.4",
+  "version": "0.2.0",
   "description": "Brand-agnostic design token foundation. Vanilla CSS custom properties, OKLCH ramps, border-first. No framework, no build step.",
   "license": "MIT",
   "type": "module",
@@ -41,6 +41,7 @@
   ],
   "exports": {
     "./tokens.css": "./src/tokens.css",
+    "./base.css": "./src/base.css",
     "./adapters/nuxt-ui.css": "./src/adapters/nuxt-ui.css",
     "./contrast-policy.json": "./src/contrast-policy.json",
     "./stylelint": "./stylelint/index.json",

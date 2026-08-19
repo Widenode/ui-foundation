@@ -8,6 +8,7 @@
 <!-- Tokens are NOT inlined. The specimen consumes the published file, so it
      is a live test of src/tokens.css rather than a copy that can drift. -->
 <link rel="stylesheet" href="../src/tokens.css">
+<link rel="stylesheet" href="../src/base.css">
 
 <style>
 /* ==========================================================================
@@ -15,29 +16,12 @@
    This file is itself the proof that the semantic layer is complete.
    ========================================================================== */
 
-*, *::before, *::after { box-sizing: border-box; }
-
-/* Reserve the scrollbar gutter unconditionally. Without it a centred layout
-   jumps horizontally the moment a page grows past one viewport, so navigating
-   between a short page and a long one makes the whole UI twitch. */
-html { -webkit-text-size-adjust: 100%; scrollbar-gutter: stable; }
-
-body {
-  margin: 0;
-  background: var(--surface-base);
-  color: var(--text-primary);
-  font-family: var(--font-sans);
-  font-size: var(--text-base);
-  line-height: var(--leading-base);
-  -webkit-font-smoothing: antialiased;
-  transition: background var(--duration-base) var(--ease-out);
-}
-
-:focus-visible {
-  outline: var(--focus-ring-width) solid var(--focus-ring);
-  outline-offset: var(--focus-ring-offset);
-  border-radius: var(--radius-xs);
-}
+/* box-sizing, the scrollbar gutter, body surface/type and the focus ring all
+   come from base.css, which this file links above — so the optional base layer
+   is exercised by every gate rather than shipped and hoped. Only the theme
+   transition is specimen-only: base.css deliberately omits it, because a
+   transitioning background makes axe sample mid-fade. */
+body { transition: background var(--duration-base) var(--ease-out); }
 
 /* ---------- page frame ---------- */
 .page { max-width: 1120px; margin: 0 auto; padding: var(--space-8) var(--space-6) var(--space-20); }

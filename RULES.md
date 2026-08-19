@@ -231,7 +231,8 @@ Defined once so nothing invents its own: `default`, `hover`, `active`,
 - **[default]** **Focus is a ring, not a border change.** In a border-first
   system a colour-only border swap is too quiet to serve as focus. 2px, 2px
   offset, `--focus-ring`. The ring's 3:1 contrast is
-  **[enforced — `test:contrast`]**; using a ring at all is not.
+  **[enforced — `test:contrast`]**; using a ring at all is not — but `base.css`
+  applies it globally, so adopting that file makes it true by default.
 - **[default]** Minimum touch target `--target-min` (44px). `test:a11y` enforces
   the WCAG 2.2 SC 2.5.8 floor of 24px, not 44 — the larger figure is the Apple
   HIG number and the better default, but only the smaller one is checked.
@@ -278,7 +279,7 @@ fine; one that does otherwise by accident is drift.
 - **Reserve the scrollbar gutter** (`scrollbar-gutter: stable` on the root).
   **[enforced — `test:layout`]** Otherwise a centred layout shifts horizontally
   the moment content grows past one viewport, so moving between a short page and
-  a long one makes the whole interface twitch.
+  a long one makes the whole interface twitch. Provided by `base.css`.
 - **Truncate with a title attribute; never wrap in table cells.**
 
 ---
@@ -343,6 +344,27 @@ gates.
 
 Human review is then Tier 3 — does this look and feel right — plus those
 judgement calls. That is the part that actually needs a person.
+
+---
+
+## The optional base layer
+
+`tokens.css` declares custom properties and nothing else. That is a promise
+worth keeping: it has no side effects, cannot collide with an existing reset,
+and can be adopted by any app without argument.
+
+Some rules cannot be expressed as a token, though — `box-sizing`, the scrollbar
+gutter, the focus ring. `base.css` is where those live, as a **separate, opt-in
+import**. It emits real rules, which is exactly why it is not folded into
+tokens.css.
+
+Its scope is rules that are universal, brand-agnostic, and implement something
+already stated in this document. **Components are permanently out of scope** —
+no `.btn`, no `.card`. The moment that file grows a component it stops being
+safe to adopt, and the two-import split stops meaning anything.
+
+The specimen links it, so it is covered by every gate rather than shipped and
+hoped.
 
 ---
 

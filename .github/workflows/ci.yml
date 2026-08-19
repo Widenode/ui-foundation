@@ -44,8 +44,36 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      # Keyed on Playwright's own version rather than the lockfile hash, so an
+      # unrelated dependency bump does not throw away a browser download.
+      - name: Resolve Playwright version
+        id: playwright
+        run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: Restore Chromium
+        id: chromium-cache
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}
+
+      # Deliberately no --with-deps. It shells out to apt-get for Chromium's
+      # shared libraries, which the ubuntu-latest image already carries, and it
+      # was costing this job between 21s and 681s depending on which mirror the
+      # runner drew — a 32x swing on the same command, against ~15s of actual
+      # work. Running it in the pinned Playwright container instead was measured
+      # too and is slower: image init alone is 27-41s.
+      #
+      # Nothing in this job compares pixels, and the specimen uses system font
+      # fallbacks, so a missing font package cannot change a result here. The
+      # screenshot gate that WOULD be sensitive to it runs in the container, in
+      # its own job, untouched by this.
+      #
+      # If a future runner image drops a library, Chromium will fail to launch
+      # and the fix is to put --with-deps back on this line rather than debug it.
       - name: Install Chromium
-        run: npx playwright install --with-deps chromium
+        if: steps.chromium-cache.outputs.cache-hit != 'true'
+        run: npx playwright install chromium
 
       # The Tier 1 gate: contrast, target size, ARIA, focus order.
       - name: Accessibility

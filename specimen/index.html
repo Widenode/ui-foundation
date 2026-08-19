@@ -123,6 +123,15 @@ body { transition: background var(--duration-base) var(--ease-out); }
 .btn--warn { background: var(--status-warn-solid); color: var(--text-on-warn); }
 .btn[disabled] { color: var(--text-disabled); background: var(--surface-raised); border-color: var(--border-subtle); cursor: not-allowed; }
 .btn--sm { min-height: var(--control-height-sm); font-size: var(--text-xs); padding: 0 var(--space-3); }
+
+/* Icon-only: no label to size against, and nothing to read. It gets the full
+   --target-min square rather than a control height, because a control whose
+   whole affordance is a 14px glyph is the one that most needs a big hit area.
+   The icon is still sized in em — a deliberate multiple of the control's own
+   font-size — so it never becomes a raw pixel value. The accessible name is
+   the caller's job and axe enforces it. */
+.btn--icon { min-width: var(--target-min); min-height: var(--target-min); padding: 0; }
+.btn--icon .icon { width: 1.25em; height: 1.25em; }
 .btn--lg { min-height: var(--control-height-lg); padding: 0 var(--space-5); }
 
 .field { display: flex; flex-direction: column; }
@@ -368,6 +377,11 @@ select.input { appearance: none; background-image: linear-gradient(45deg, transp
         <button class="btn btn--ok">Approve order</button>
         <button class="btn btn--warn">Flag for review</button>
         <span class="muted" style="font-size:var(--text-xs)">Each solid fill names its own text colour. Only warn is near-black — no yellow that still reads as yellow carries white text at 4.5:1.</span>
+      </div>
+      <div class="row" style="margin-top:var(--gap-related)">
+        <button class="btn btn--outline btn--icon" aria-label="Add item"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
+        <button class="btn btn--ghost btn--icon" aria-label="Delete item"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg></button>
+        <span class="muted" style="font-size:var(--text-xs)">Icon-only controls get the full 44px target and an aria-label — there is no visible text to read.</span>
       </div>
       <div class="row" style="margin-top:var(--gap-related)">
         <button class="btn btn--outline btn--sm">Small</button>

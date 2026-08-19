@@ -39,10 +39,17 @@ at `node_modules/@widenode/ui-foundation/INTEGRATION.md`.
 
 ```css
 @import "@widenode/ui-foundation/tokens.css";
+@import "@widenode/ui-foundation/base.css";   /* optional, recommended */
 ```
 
-That is the whole integration. The stylesheet declares custom properties and
-nothing else — no reset, no utilities, no side effects beyond the tokens.
+`tokens.css` declares custom properties and nothing else — no reset, no
+utilities, no side effects. That promise is why it is safe to drop into any app.
+
+`base.css` is the opt-in companion for the few rules that **cannot** be a token:
+`box-sizing`, `scrollbar-gutter: stable` so centred layouts do not shift when a
+scrollbar appears, iOS text-size-adjust, the Tier 2 roles applied to `body`, and
+the `:focus-visible` ring. Components are permanently out of scope for it — it
+will never contain a `.btn`.
 
 Dark mode is an attribute on the root element:
 

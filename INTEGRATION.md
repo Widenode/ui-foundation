@@ -22,15 +22,31 @@ renamed CSS custom property fails silently to `unset` — nothing type-checks it
 
 ```css
 @import "@widenode/ui-foundation/tokens.css";
+@import "@widenode/ui-foundation/base.css";   /* optional, recommended */
 ```
 
 ```html
 <html data-theme="light">
 ```
 
-That is the entire integration. The stylesheet declares custom properties and
-nothing else — no reset, no utilities. Switch themes by setting
-`data-theme="dark"` on the root element.
+Switch themes by setting `data-theme="dark"` on the root element.
+
+`tokens.css` declares custom properties and nothing else — no reset, no
+utilities, no side effects. `base.css` is the opt-in companion that emits the
+handful of real rules that cannot be tokens:
+
+| Rule | Why it is not left to you |
+|---|---|
+| `box-sizing: border-box` | The spacing scale assumes it. Under content-box, padding tokens change an element's width instead of its inset |
+| `scrollbar-gutter: stable` | Without it a centred layout shifts sideways when a page grows past one viewport, so navigation twitches |
+| `-webkit-text-size-adjust: 100%` | iOS inflates text in landscape, breaking the type scale |
+| `body` surface, text and font | Applies the Tier 2 roles to the document |
+| `:focus-visible` ring | A component that forgets it fails silently for keyboard users |
+
+Skip it if you already have a reset you trust — but then the scrollbar gutter
+and the focus ring become your job, and both are in `RULES.md` for a reason.
+**Components are permanently out of scope for `base.css`**; it will never
+contain a `.btn`.
 
 ---
 
@@ -54,9 +70,15 @@ records what is deliberately not mapped.
 @import "tailwindcss";
 @import "@nuxt/ui";
 @import "@widenode/ui-foundation/tokens.css";
+@import "@widenode/ui-foundation/base.css";
 @import "@widenode/ui-foundation/adapters/nuxt-ui.css";
 @import "./brand.css";
 ```
+
+`base.css` is optional but recommended — see §2 for what it does. Tailwind's
+preflight already handles `box-sizing`, so the overlap there is harmless; the
+scrollbar gutter and focus ring are the parts you would otherwise write
+yourself.
 
 **Do not wrap these in `layer()`.** Nuxt UI declares its `--ui-*` tokens inside
 `@layer theme`; these imports are unlayered, and unlayered styles beat layered

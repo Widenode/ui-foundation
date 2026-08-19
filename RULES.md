@@ -127,7 +127,7 @@ cannot adapt to one that can.
 
 ## Type
 
-**[default]** throughout — none of this is checked. It is judgement with
+**[default]** except where marked otherwise below — mostly judgement, with
 reasons attached.
 
 Size, leading and tracking are authored as triplets. Leading tightens as size
@@ -141,6 +141,11 @@ the leading of another undoes that, and generally looks wrong.
   `--font-mono` are declared here with system fallbacks and swapped at brand.
 - Tabular numerals (`font-variant-numeric: tabular-nums`) on numeric columns.
   Without them digits shift width and the column visibly jitters.
+- **Single-line control labels use `line-height: 1`** — buttons, inputs, badges,
+  chips, tabs. **[enforced — `test:layout`]** The leading scale is for prose. A
+  control that inherits body leading gets a line box taller than its glyphs, so
+  it looks puffy and the label reads as badly centred even though the flex
+  centring is exact. Multi-line controls (textarea) keep their size's leading.
 
 ---
 
@@ -226,7 +231,8 @@ Defined once so nothing invents its own: `default`, `hover`, `active`,
 - **[default]** **Focus is a ring, not a border change.** In a border-first
   system a colour-only border swap is too quiet to serve as focus. 2px, 2px
   offset, `--focus-ring`. The ring's 3:1 contrast is
-  **[enforced — `test:contrast`]**; using a ring at all is not.
+  **[enforced — `test:contrast`]**; using a ring at all is not — but `base.css`
+  applies it globally, so adopting that file makes it true by default.
 - **[default]** Minimum touch target `--target-min` (44px). `test:a11y` enforces
   the WCAG 2.2 SC 2.5.8 floor of 24px, not 44 — the larger figure is the Apple
   HIG number and the better default, but only the smaller one is checked.
@@ -260,7 +266,20 @@ fine; one that does otherwise by accident is drift.
 - **Label/value pairing is top-label.** Label above control, `--gap-tight`
   between. Inline labels would require a grid the renderer must produce; we
   don't use them.
-- **Numeric columns right-align, text columns left-align.** No centering.
+- **Numeric columns right-align, text columns left-align.** No centering. The
+  header cell takes the alignment of **its own column** — a right-aligned number
+  under a left-aligned header is the most common way this is done wrong.
+  **[enforced — `test:layout`]**
+- **An icon paired with a label centres on the label, never on the baseline.**
+  **[enforced — `test:layout`]** The pair is a flex container with
+  `align-items: center` and `--gap-tight` between; the icon is `display: block`
+  and sized in `em`. An inline SVG defaults to baseline alignment, which puts
+  its bottom edge on the baseline and leaves it riding visibly low. This applies
+  inside a control and outside one — anywhere an icon sits beside text.
+- **Reserve the scrollbar gutter** (`scrollbar-gutter: stable` on the root).
+  **[enforced — `test:layout`]** Otherwise a centred layout shifts horizontally
+  the moment content grows past one viewport, so moving between a short page and
+  a long one makes the whole interface twitch. Provided by `base.css`.
 - **Truncate with a title attribute; never wrap in table cells.**
 
 ---
@@ -305,7 +324,7 @@ document leans on hardest.
 
 ## Enforcement
 
-Five gates run in CI on every pull request. This is the complete list — if a
+Six gates run in CI on every pull request. This is the complete list — if a
 statement above is marked **[enforced]**, one of these is what enforces it.
 
 | Gate | Covers |
@@ -314,16 +333,38 @@ statement above is marked **[enforced]**, one of these is what enforces it.
 | `lint:tokens` | `check-tokens.mjs`: arbitrary Tailwind values (`p-[13px]`), raw hex, Tier 1 references, direct `--ui-*` use, Tailwind `shadow-*` classes — including inside template strings, which an AST linter cannot see |
 | `test:a11y` | axe-core over the specimen in both themes: WCAG 2.0 / 2.1 / 2.2 A and AA — ARIA, focus order, target size at the 24px floor |
 | `test:contrast` | `src/contrast-policy.json` asserted pair by pair in both themes, including pairs no component renders yet |
+| `test:layout` | Table headers match their column's alignment; single-line controls do not inherit prose leading |
 | `test:visual` | Screenshot diff of the specimen, two viewports, both themes |
 
 **What is not enforced:** everything marked **[default]**. Type pairing,
 measure, tabular numerals, nesting depth, whether a shadow belongs on the thing
-you put it on, whether a given border conveys information, alignment, label
-placement, truncation, empty-state shape. Judgement calls with reasons recorded,
-not gates.
+you put it on, whether a given border conveys information, label placement,
+truncation, empty-state shape. Judgement calls with reasons recorded, not
+gates.
 
 Human review is then Tier 3 — does this look and feel right — plus those
 judgement calls. That is the part that actually needs a person.
+
+---
+
+## The optional base layer
+
+`tokens.css` declares custom properties and nothing else. That is a promise
+worth keeping: it has no side effects, cannot collide with an existing reset,
+and can be adopted by any app without argument.
+
+Some rules cannot be expressed as a token, though — `box-sizing`, the scrollbar
+gutter, the focus ring. `base.css` is where those live, as a **separate, opt-in
+import**. It emits real rules, which is exactly why it is not folded into
+tokens.css.
+
+Its scope is rules that are universal, brand-agnostic, and implement something
+already stated in this document. **Components are permanently out of scope** —
+no `.btn`, no `.card`. The moment that file grows a component it stops being
+safe to adopt, and the two-import split stops meaning anything.
+
+The specimen links it, so it is covered by every gate rather than shipped and
+hoped.
 
 ---
 

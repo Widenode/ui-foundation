@@ -8,6 +8,7 @@
 <!-- Tokens are NOT inlined. The specimen consumes the published file, so it
      is a live test of src/tokens.css rather than a copy that can drift. -->
 <link rel="stylesheet" href="../src/tokens.css">
+<link rel="stylesheet" href="../src/base.css">
 
 <style>
 /* ==========================================================================
@@ -15,26 +16,12 @@
    This file is itself the proof that the semantic layer is complete.
    ========================================================================== */
 
-*, *::before, *::after { box-sizing: border-box; }
-
-html { -webkit-text-size-adjust: 100%; }
-
-body {
-  margin: 0;
-  background: var(--surface-base);
-  color: var(--text-primary);
-  font-family: var(--font-sans);
-  font-size: var(--text-base);
-  line-height: var(--leading-base);
-  -webkit-font-smoothing: antialiased;
-  transition: background var(--duration-base) var(--ease-out);
-}
-
-:focus-visible {
-  outline: var(--focus-ring-width) solid var(--focus-ring);
-  outline-offset: var(--focus-ring-offset);
-  border-radius: var(--radius-xs);
-}
+/* box-sizing, the scrollbar gutter, body surface/type and the focus ring all
+   come from base.css, which this file links above — so the optional base layer
+   is exercised by every gate rather than shipped and hoped. Only the theme
+   transition is specimen-only: base.css deliberately omits it, because a
+   transitioning background makes axe sample mid-fade. */
+body { transition: background var(--duration-base) var(--ease-out); }
 
 /* ---------- page frame ---------- */
 .page { max-width: 1120px; margin: 0 auto; padding: var(--space-8) var(--space-6) var(--space-20); }
@@ -102,11 +89,24 @@ body {
 .bad .fake-label { margin-bottom: var(--gap-tight); }
 
 /* ---------- controls ---------- */
+
+/* Icons pair with a label, never sit on the text baseline. `display: block`
+   is what stops that: an inline SVG aligns its bottom edge to the baseline and
+   rides low. Sized in em so it tracks the label, `flex: none` so it never
+   squashes. The parent's align-items: center then centres it on the text box,
+   which is exact because control labels use line-height: 1. */
+.icon { display: block; flex: none; width: 1em; height: 1em; }
+
 .btn {
   display: inline-flex; align-items: center; justify-content: center; gap: var(--gap-tight);
   min-height: var(--control-height-md);
   padding: 0 var(--space-4);
   font: inherit; font-size: var(--text-sm); font-weight: var(--weight-medium);
+
+  /* Single-line control: leading 1, so the line box matches the glyph box and
+     the flex centring is exact. Inheriting body leading (1.6) pads the box and
+     makes the label read as badly centred. */
+  line-height: 1;
   border-radius: var(--radius-md);
   border: var(--border-width) solid transparent;
   cursor: pointer;
@@ -134,7 +134,7 @@ body {
 .input {
   min-height: var(--control-height-md);
   padding: 0 var(--control-pad-x);
-  font: inherit; font-size: var(--text-sm);
+  font: inherit; font-size: var(--text-sm); line-height: 1;
   color: var(--text-primary);
   background: var(--surface-base);
   border: var(--border-width) solid var(--border-strong);
@@ -175,7 +175,7 @@ select.input { appearance: none; background-image: linear-gradient(45deg, transp
 .table .num { text-align: right; font-variant-numeric: tabular-nums; }
 .table .truncate { max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-.badge { display: inline-flex; align-items: center; gap: var(--gap-tight); padding: 2px var(--space-2); font-size: var(--text-2xs); font-weight: var(--weight-medium); border-radius: var(--radius-full); border: var(--border-width) solid; }
+.badge { display: inline-flex; align-items: center; gap: var(--gap-tight); padding: 4px var(--space-2); font-size: var(--text-2xs); line-height: 1; font-weight: var(--weight-medium); border-radius: var(--radius-full); border: var(--border-width) solid; }
 .badge--ok { background: var(--status-ok-bg); border-color: var(--status-ok-border); color: var(--status-ok-text); }
 .badge--warn { background: var(--status-warn-bg); border-color: var(--status-warn-border); color: var(--status-warn-text); }
 .badge--bad { background: var(--status-bad-bg); border-color: var(--status-bad-border); color: var(--status-bad-text); }
@@ -358,7 +358,7 @@ select.input { appearance: none; background-image: linear-gradient(45deg, transp
     <div class="block">
       <h3 class="block__title">Buttons</h3>
       <div class="row">
-        <button class="btn btn--solid">Save changes</button>
+        <button class="btn btn--solid"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Save changes</button>
         <button class="btn btn--outline">Cancel</button>
         <button class="btn btn--ghost">Reset filters</button>
         <button class="btn btn--danger">Delete order</button>
@@ -445,10 +445,10 @@ select.input { appearance: none; background-image: linear-gradient(45deg, transp
             </tr>
           </thead>
           <tbody>
-            <tr><td class="truncate" title="Anodised aluminium laptop stand, adjustable height, matte charcoal finish">Anodised aluminium laptop stand, adjustable height, matte charcoal finish</td><td class="mono muted">…computer.accessory</td><td><span class="badge badge--ok">In stock</span></td><td class="num">2</td><td class="num">64.00</td><td class="num">128.00</td></tr>
-            <tr><td class="truncate" title="14&quot; ultraportable notebook">14&quot; ultraportable notebook</td><td class="mono muted">…computer.laptop</td><td><span class="badge badge--warn">Low</span></td><td class="num">1</td><td class="num">1,499.00</td><td class="num">1,499.00</td></tr>
-            <tr><td class="truncate" title="USB-C hub">USB-C hub</td><td class="mono muted">…computer.accessory</td><td><span class="badge badge--bad">Backordered</span></td><td class="num">3</td><td class="num">39.95</td><td class="num">119.85</td></tr>
-            <tr><td class="truncate" title="Extended warranty, 36 months">Extended warranty, 36 months</td><td class="mono muted">…service.warranty</td><td><span class="badge badge--neutral">Pending</span></td><td class="num">1</td><td class="num">180.00</td><td class="num">180.00</td></tr>
+            <tr><td class="truncate" title="Anodised aluminium laptop stand, adjustable height, matte charcoal finish">Anodised aluminium laptop stand, adjustable height, matte charcoal finish</td><td class="mono muted">…computer.accessory</td><td><span class="badge badge--ok"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>In stock</span></td><td class="num">2</td><td class="num">64.00</td><td class="num">128.00</td></tr>
+            <tr><td class="truncate" title="14&quot; ultraportable notebook">14&quot; ultraportable notebook</td><td class="mono muted">…computer.laptop</td><td><span class="badge badge--warn"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>Low</span></td><td class="num">1</td><td class="num">1,499.00</td><td class="num">1,499.00</td></tr>
+            <tr><td class="truncate" title="USB-C hub">USB-C hub</td><td class="mono muted">…computer.accessory</td><td><span class="badge badge--bad"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>Backordered</span></td><td class="num">3</td><td class="num">39.95</td><td class="num">119.85</td></tr>
+            <tr><td class="truncate" title="Extended warranty, 36 months">Extended warranty, 36 months</td><td class="mono muted">…service.warranty</td><td><span class="badge badge--neutral"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>Pending</span></td><td class="num">1</td><td class="num">180.00</td><td class="num">180.00</td></tr>
             <tr><td class="truncate" title="Braided charging cable, 2 m">Braided charging cable, 2 m</td><td class="mono muted">…computer.accessory</td><td><span class="badge badge--ok">In stock</span></td><td class="num">12</td><td class="num">11.50</td><td class="num">138.00</td></tr>
           </tbody>
         </table>

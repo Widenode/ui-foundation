@@ -1,0 +1,63 @@
+/* base.css — optional base layer
+ *
+ * `tokens.css` declares custom properties and nothing else, deliberately: it
+ * has no side effects and cannot collide with anything you already have. This
+ * file is the opposite — it emits real rules — which is exactly why it is a
+ * separate, opt-in import rather than part of tokens.css.
+ *
+ *   @import "@widenode/ui-foundation/tokens.css";
+ *   @import "@widenode/ui-foundation/base.css";
+ *
+ * IN SCOPE: rules that are universal, brand-agnostic, and cannot be expressed
+ * as a token. Every rule below implements something RULES.md already states,
+ * and each carries the reason it is here rather than left to the app.
+ *
+ * NOT IN SCOPE: components. No `.btn`, no `.card`, no `.icon` — not ever. If it
+ * needs a class name of its own it belongs in your app or a component library.
+ * The moment this file grows a component, it stops being safe to adopt.
+ * ========================================================================== */
+
+/* The spacing scale assumes border-box. Under content-box every padding token
+   silently changes an element's width instead of its inset, so `--gap-*` and
+   `--control-height-*` stop meaning what they say. */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  /* Reserve the scrollbar gutter unconditionally. Without it a centred layout
+     shifts sideways the moment content grows past one viewport, so moving
+     between a short page and a long one makes the whole interface twitch.
+     RULES.md, "Layout hints that constrain markup". */
+  scrollbar-gutter: stable;
+
+  /* iOS inflates text in landscape without this, which silently breaks the
+     type scale on exactly the devices where measure matters most. */
+  -webkit-text-size-adjust: 100%;
+}
+
+/* Applies the Tier 2 surface and text roles to the document. Plain element
+   selectors, so anything in your app outranks them. */
+body {
+  margin: 0;
+  background: var(--surface-base);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  line-height: var(--leading-base);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* "Focus is a ring, not a border change." In a border-first system a
+   colour-only border swap is too quiet to serve as focus, and the ring is the
+   one affordance a keyboard user cannot do without. Given here rather than left
+   to each component, because a component that forgets it fails silently for the
+   people who most depend on it.
+
+   No border-radius: the outline already follows the element's own radius. */
+:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}

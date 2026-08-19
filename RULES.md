@@ -156,8 +156,8 @@ rule self-enforcing rather than a thing to remember.
 
 | Token | Value | Relationship |
 |---|---|---|
-| `--gap-tight` | 8px | icon ↔ label |
-| `--gap-related` | 12px | label ↔ input |
+| `--gap-tight` | 8px | inside one thing: icon ↔ label, and label ↔ control ↔ hint |
+| `--gap-related` | 12px | a heading and its supporting text; items sitting in a row |
 | `--gap-item` | 20px | field ↔ field |
 | `--gap-group` | 40px | group ↔ group |
 | `--gap-section` | 80px | section ↔ section |
@@ -166,6 +166,29 @@ Each step is ~1.6–2× the previous, which guarantees **space within a group is
 always visibly smaller than space around it**. Equal spacing everywhere is the
 single most common failure in generated UI — and it is visible in a screenshot,
 which makes it checkable.
+
+### A field is one group
+
+**[enforced — `test:layout`]** A label, its control, and the hint or error
+beneath it are one thing. So:
+
+- the gap **below** the control must never exceed the gap **above** it, and
+- both must be visibly smaller than the gap between fields.
+
+Getting this backwards is subtle and common: an error sitting further from its
+input than the label does reads as belonging to the *next* field, or to nothing.
+The eye groups by proximity before it reads anything, so the message that
+matters most ends up looking detached from the control it describes.
+
+This is also why the table above puts field internals on `--gap-tight` rather
+than `--gap-related`. At 8px against a 20px field gap the grouping is obvious;
+at 12px the ratio falls to 1.67 and the error starts to float between two
+fields. The value matters less than the *contrast* with the gap around it.
+
+**A hint or error must also be linked programmatically**, with
+`aria-describedby` on the control. Proximity is a sighted-user affordance; it
+conveys nothing to a screen reader. No linter checks this — axe has no rule for
+it — so it is checked by `test:layout` instead.
 
 Reach for the relationship token, not the raw `--space-*` value.
 

@@ -235,3 +235,69 @@ test('icon-only controls meet the minimum target size', async ({ page }) => {
 
   expect(offenders, 'icon-only controls below --target-min').toEqual([])
 })
+
+test('a field groups with its hint, not away from it', async ({ page }) => {
+  await page.goto(ROUTE)
+
+  const offenders = await page.evaluate(() => {
+    const bad: string[] = []
+    const CONTROLS = 'input:not([type="checkbox"]):not([type="radio"]), select, textarea'
+
+    for (const control of document.querySelectorAll<HTMLElement>(CONTROLS)) {
+      const label =
+        (control.id && document.querySelector<HTMLElement>(`label[for="${CSS.escape(control.id)}"]`)) ||
+        control.closest('label')
+      if (!label) continue
+
+      // The field is the nearest ancestor holding both the label and control.
+      let field: HTMLElement | null = control.parentElement
+      while (field && !field.contains(label)) field = field.parentElement
+      if (!field) continue
+
+      // Descriptive text sitting after the control, inside the field.
+      const after = [...field.children].filter(
+        (el) =>
+          el !== control &&
+          el !== label &&
+          el.compareDocumentPosition(control) & Node.DOCUMENT_POSITION_PRECEDING &&
+          (el.textContent || '').trim().length > 0,
+      ) as HTMLElement[]
+      if (!after.length) continue
+      const hint = after[0]
+
+      const name = label.textContent?.trim().slice(0, 24) || control.id
+
+      const above = control.getBoundingClientRect().top - label.getBoundingClientRect().bottom
+      const below = hint.getBoundingClientRect().top - control.getBoundingClientRect().bottom
+
+      // Below must not exceed above: a hint further from its control than the
+      // label reads as belonging to the next field.
+      if (below > above + 0.5) {
+        bad.push(
+          `"${name}" — ${below.toFixed(1)}px below the control vs ${above.toFixed(1)}px above it`,
+        )
+      }
+
+      // And the field must still be visibly tighter than the gap around it.
+      const next = field.nextElementSibling as HTMLElement | null
+      if (next && (next.textContent || '').trim()) {
+        const around = next.getBoundingClientRect().top - field.getBoundingClientRect().bottom
+        const within = Math.max(above, below)
+        if (around <= within) {
+          bad.push(
+            `"${name}" — ${around.toFixed(1)}px to the next field is not more than ${within.toFixed(1)}px inside it`,
+          )
+        }
+      }
+
+      // Proximity is a sighted affordance. The hint has to be linked too.
+      const described = (control.getAttribute('aria-describedby') || '').split(/\s+/)
+      if (!hint.id || !described.includes(hint.id)) {
+        bad.push(`"${name}" — hint is not referenced by the control's aria-describedby`)
+      }
+    }
+    return [...new Set(bad)]
+  })
+
+  expect(offenders, 'fields whose hint is grouped wrongly or left unlinked').toEqual([])
+})

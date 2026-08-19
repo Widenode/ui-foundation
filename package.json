@@ -1,6 +1,6 @@
 {
   "name": "@widenode/ui-foundation",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "Brand-agnostic design token foundation. Vanilla CSS custom properties, OKLCH ramps, border-first. No framework, no build step.",
   "license": "MIT",
   "type": "module",
@@ -68,9 +68,10 @@
     "lint:tokens": "node scripts/check-tokens.mjs src",
     "test:a11y": "playwright test tests/a11y.spec.ts",
     "test:contrast": "playwright test tests/contrast.spec.ts",
+    "test:layout": "playwright test tests/layout.spec.ts",
     "test:visual": "playwright test tests/visual.spec.ts",
     "test:visual:update": "playwright test tests/visual.spec.ts --update-snapshots",
-    "verify": "npm run lint && npm run test:a11y && npm run test:contrast && npm run test:visual",
+    "verify": "npm run lint && npm run test:a11y && npm run test:contrast && npm run test:layout && npm run test:visual",
     "prepack": "npm run verify"
   }
 }

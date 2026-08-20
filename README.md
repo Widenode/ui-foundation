@@ -187,8 +187,12 @@ The `[enforced]` rules that no linter can see ship as runnable assertions, so
 they run against your routes rather than only this package's specimen:
 
 ```js
-import { layoutChecks } from '@widenode/ui-foundation/layout-checks'
+import { layoutChecks, settle } from '@widenode/ui-foundation/layout-checks'
 ```
+
+They measure a settled page, so `settle(page)` ships with them — after anything
+that opens a dialog or a listbox, an enter animation makes every geometric
+comparison read a transformed box against an untransformed style.
 
 Fourteen checks — header alignment, control leading, icon centring and sizing,
 icon-only target size, field grouping, cap-to-baseline trimming with its height

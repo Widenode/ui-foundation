@@ -230,7 +230,7 @@ specimen:
 ```ts
 // tests/layout.spec.ts
 import { test, expect } from '@playwright/test'
-import { layoutChecks } from '@widenode/ui-foundation/layout-checks'
+import { layoutChecks, settle } from '@widenode/ui-foundation/layout-checks'
 
 const ROUTES = ['/', '/settings', '/orders/new']
 
@@ -238,11 +238,43 @@ for (const check of layoutChecks) {
   for (const route of ROUTES) {
     test(`${check.name} — ${route}`, async ({ page }) => {
       await page.goto(route)
+      await settle(page)                 // see below — not optional
       expect(await check.run(page), check.name).toEqual([])
     })
   }
 }
 ```
+
+### Measure a settled page
+
+**Whenever an action opened something — a dialog, a listbox, a drawer — wait for
+it to land before running a check.** A rendered box is transformed and a
+computed style is not, so a running animation puts a scale factor between the
+two halves of every geometric comparison. Against a dialog that was correct at
+rest, that reported a 44px close button as `42x42px`, a correctly sized switch
+as puffy, and five settled controls as off the pixel grid.
+
+Lengths are corrected for inside the checks. Positions cannot be, so
+`pixelGridChecks` refuses to measure a transformed control and tells you to
+settle instead of inventing a defect.
+
+```ts
+import { settle } from '@widenode/ui-foundation/layout-checks'
+
+await page.getByRole('button', { name: 'Settings' }).click()
+await settle(page, { selector: '[role="dialog"]' })
+```
+
+Pass the `selector` when you can. Without one the wait can pass **vacuously** —
+an empty animation list means "not started yet" as often as "finished" — and an
+assertion on the rendered state cannot be satisfied that way. `settle` rejects
+rather than returning quietly, because a silent false is how the phantom
+failures got reported in the first place.
+
+Related, and the same root cause: **axe reports moving contrast**. Run during an
+enter animation it composites text against a partly transparent panel and finds
+failures that are not there. The tell is that the numbers change between runs; a
+real contrast defect does not move.
 
 ```ts
 // Run these too if your leading is rounded and your controls declare their
@@ -275,7 +307,16 @@ Icon detection is structural rather than `svg`-only, so it works with an icon
 font (Font Awesome, Material Symbols) as well as inline SVG.
 
 **A check that reports your whole component library is a bug in the check.**
-Two of these did, in 0.4.0, and both are fixed rather than documented around:
+`a field groups with its hint` was one: for a control whose label sits *beside*
+it — a switch, the universal shape for one — it picked the label's wrapper as
+"the hint", and since a wrapper has no `id`, the `aria-describedby` branch fired
+against correct wiring every time. It now finds the hint by what the control
+points at, and only measures distance when the label is actually above the
+control. RULES.md makes top-label a `[default]`, not a rule, so a check that
+cannot pass for a shape the default permits must report nothing.
+
+Two others did the same in 0.4.0, and both are fixed rather than documented
+around:
 `single-line controls do not inherit prose leading` now stays quiet unless the
 leading actually drives the control's height, and the pill check measures border
 plus padding rather than padding alone. If one still reports something you did

@@ -35,3 +35,20 @@ export declare const pixelGridChecks: LayoutCheck[]
 
 /** @deprecated Renamed to {@link pixelGridChecks}. */
 export declare const pinnedFontChecks: LayoutCheck[]
+
+export interface SettleOptions {
+  /**
+   * Element that must have landed — `opacity: 1` and an identity transform.
+   * Worth passing: without it the wait can pass vacuously, because an empty
+   * animation list means "not started yet" as often as "finished".
+   */
+  selector?: string | null
+  /** Milliseconds before rejecting. Default 5000. */
+  timeout?: number
+}
+
+/**
+ * Wait for the page to stop moving. Call before the checks whenever an action
+ * opened something. Rejects if it is still moving at the timeout.
+ */
+export declare function settle<TPage>(page: TPage, options?: SettleOptions): Promise<void>

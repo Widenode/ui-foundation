@@ -202,7 +202,8 @@
   --control-height-md: 36px;
   --control-height-lg: 44px;
   --control-pad-x: var(--space-3);
-  --target-min: 44px;  /* Apple HIG. WCAG 2.2 SC 2.5.8 floor is 24px. */
+  --target-min: 44px;    /* Apple HIG. The [default]. */
+  --target-floor: 24px;  /* WCAG 2.2 SC 2.5.8. The [enforced] minimum. */
 }
 
 /* --------------------------------------------------------------------------

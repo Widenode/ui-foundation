@@ -481,9 +481,19 @@ Defined once so nothing invents its own: `default`, `hover`, `active`,
   offset, `--focus-ring`. The ring's 3:1 contrast is
   **[enforced — `test:contrast`]**; using a ring at all is not — but `base.css`
   applies it globally, so adopting that file makes it true by default.
-- **[default]** Minimum touch target `--target-min` (44px). `test:a11y` enforces
-  the WCAG 2.2 SC 2.5.8 floor of 24px, not 44 — the larger figure is the Apple
-  HIG number and the better default, but only the smaller one is checked.
+- **[default]** Minimum touch target `--target-min` (44px) — the Apple HIG
+  figure and the better default.
+- **[enforced — `test:a11y`]** Never below `--target-floor` (24px), the WCAG 2.2
+  SC 2.5.8 minimum. **Both numbers now have names, and that is the fix to an
+  earlier gap:** only the default was a token, so a control that could not reach
+  44px had nothing to reference and reached for a spacing token instead — the
+  right value under a name that means something else.
+
+  Use the floor only where the default genuinely cannot be met, and never as a
+  starting point. The case that forced this: a switch track is 36x20 at its
+  library's own sizing, and forcing `--target-min` on it produced a 36x32
+  lozenge with 8px of dead space around a 16px thumb — worse than the control it
+  replaced, in service of a number nothing enforces.
 - **[default]** Empty states get a title, one line of orientation, and one
   action. An empty screen is an invitation to act, not an apology.
 
@@ -663,6 +673,25 @@ statement above is marked **[enforced]**, one of these is what enforces it.
 | `test:contrast` | `src/contrast-policy.json` asserted pair by pair in both themes, including pairs no component renders yet |
 | `test:layout` | The fourteen `layout-checks` assertions — column alignment, icon centring and sizing, target size, field grouping, the trim with its height and clipping consequences, whole-pixel leading, scrollbar gutter, pill geometry — run against the specimen, and against fixtures that prove each one still fires |
 | `test:visual` | Screenshot diff of the specimen, two viewports, both themes |
+
+**The checks measure a settled page.** A rendered box comes from
+`getBoundingClientRect`, which is transformed. Padding, leading and font metrics
+come from CSS and from canvas, which are not. Any check comparing the two is
+reading two frames at once, and an overlay's enter animation puts a scale factor
+between them. Measured in a consuming app, against a dialog that is correct at
+rest: a 44px close button reported `42x42px, below --target-min 44px`, and a
+correct switch was reported as puffy because `32 x 0.95 - 4 = 26.4` landed
+within half a pixel of its 26px leading — so the exclusion that should have
+skipped it never fired. **A 0.95 scale factor is enough to turn a pass into a
+fail.**
+
+Lengths are corrected for: every shipped check divides the accumulated scale
+back out before comparing a rendered length with a CSS one. **Positions cannot
+be** — a transform moves a box without moving its layout, so there is nothing to
+divide out. `pixelGridChecks` therefore refuses to measure a transformed control
+and says so, rather than reporting five controls at fractional tops that are
+integral the moment the animation lands. Put the page at rest first; `settle` is
+shipped for exactly this and is harder to write correctly than it looks.
 
 **What is not enforced:** everything marked **[default]**. Type pairing,
 measure, tabular numerals, nesting depth, whether a shadow belongs on the thing

@@ -11,7 +11,7 @@
  * adding one here would violate the rule this script exists to enforce.
  */
 import { readdirSync, readFileSync, statSync } from 'node:fs'
-import { join, relative, sep } from 'node:path'
+import { extname, join, relative, sep } from 'node:path'
 
 const SRC = process.argv[2] ?? 'src'
 const EXTENSIONS = new Set(['.vue', '.css', '.ts', '.tsx', '.jsx'])
@@ -28,6 +28,71 @@ const CHECKS = [
   [/shadow-(sm|md|lg|xl|2xl)\b/, 'Tailwind shadow — only --shadow-popover / --shadow-overlay'],
   [/\bgap-\[|\bp-\[|\bm-\[|\bw-\[|\bh-\[/, 'Arbitrary Tailwind spacing/size'],
 ]
+
+/**
+ * Blank out comments, preserving every newline so line numbers still line up.
+ *
+ * The scanner is text-level on purpose — that is the whole point of it — but it
+ * does not follow that comments have to be scanned. A comment naming the
+ * utility it replaced failed the gate at the exact place the explanation was
+ * most wanted, and the only way to pass was to stop naming the thing.
+ *
+ * The false negative this permits is a banned utility written ONLY inside a
+ * comment, which is precisely the case being allowed.
+ *
+ * Line comments are the fiddly half, so they are the conservative half:
+ * unrestricted only where `//` is unambiguously a comment. In CSS it is not one
+ * at all, and `url(//cdn/x.png)` would hide the rest of a real declaration —
+ * so there, only a line that STARTS with `//` is treated as a comment.
+ */
+function maskComments(src, ext) {
+  const chars = src.split('')
+  const freeLineComments = ext === '.ts' || ext === '.tsx' || ext === '.jsx'
+  const htmlComments = ext === '.vue' || ext === '.html'
+  const blank = (from, to) => {
+    for (let k = from; k < to && k < chars.length; k++) {
+      if (chars[k] !== '\n') chars[k] = ' '
+    }
+  }
+  let quote = null
+  for (let i = 0; i < src.length; i++) {
+    const c = src[i]
+    const next = src[i + 1]
+    if (quote) {
+      if (c === '\\') i++
+      else if (c === quote) quote = null
+      // An unterminated quote must not swallow the rest of the file.
+      else if (c === '\n' && quote !== '`') quote = null
+      continue
+    }
+    if (c === '/' && next === '*') {
+      const end = src.indexOf('*/', i + 2)
+      const to = end === -1 ? src.length : end + 2
+      blank(i, to)
+      i = to - 1
+      continue
+    }
+    if (htmlComments && c === '<' && src.startsWith('<!--', i)) {
+      const end = src.indexOf('-->', i + 4)
+      const to = end === -1 ? src.length : end + 3
+      blank(i, to)
+      i = to - 1
+      continue
+    }
+    if (c === '/' && next === '/') {
+      const lineStart = src.lastIndexOf('\n', i) + 1
+      if (freeLineComments || src.slice(lineStart, i).trim() === '') {
+        const end = src.indexOf('\n', i)
+        const to = end === -1 ? src.length : end
+        blank(i, to)
+        i = to - 1
+        continue
+      }
+    }
+    if (c === '"' || c === "'" || c === '`') quote = c
+  }
+  return chars.join('')
+}
 
 function* walk(dir) {
   let entries
@@ -72,10 +137,14 @@ const findings = new Map()
 
 for (const file of files) {
   if (ALLOWED.test(file.posix)) continue
-  const lines = readFileSync(file.path, 'utf8').split(/\r?\n/)
+  const source = readFileSync(file.path, 'utf8')
+  const lines = source.split(/\r?\n/)
+  // Match against the masked copy, report the real line: the offender should
+  // read as it was written, not as the scanner saw it.
+  const scannable = maskComments(source, extname(file.path)).split(/\r?\n/)
   lines.forEach((text, i) => {
     for (const [pattern, label] of CHECKS) {
-      if (pattern.test(text)) {
+      if (pattern.test(scannable[i] ?? text)) {
         if (!findings.has(label)) findings.set(label, [])
         findings.get(label).push(`${file.posix}:${i + 1}:${text.trim()}`)
       }

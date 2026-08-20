@@ -157,7 +157,18 @@ the leading of another undoes that, and generally looks wrong.
   three faces and **18 under a fourth**. Gating the outcome in a layer whose
   `--font-sans` is a brand slot fails for the font CI happens to have rather
   than for a defect, which is exactly how it failed a release. The outcome check
-  ships as `pinnedFontChecks` for apps that pin their font.
+  ships separately, as `pixelGridChecks`, for apps that can run it.
+
+  **Its precondition is rounded leading and declared control heights, not a
+  pinned font** — a correction, from an adopting app that runs it green on both
+  Windows and Linux CI with `--font-sans` left as the system stack. A leading
+  rounded with `round(…, 1px)` is integral whatever the face, so block heights
+  are integral and controls land on the grid regardless of font metrics. What
+  propagates a fraction is a box sized by font metrics rather than by leading,
+  and a **trimmed** label is exactly that — which is why the declared height the
+  trim rule already demands is the other half of the precondition. It was named for
+  pinning because pinning was the only condition under which this package had
+  seen it pass.
 
   **This is invisible under browser zoom**, which is the trap: more device pixels
   per CSS pixel makes the fraction resolvable, so it renders correctly at 125%
@@ -203,6 +214,19 @@ the leading of another undoes that, and generally looks wrong.
   forcing `line-height: 1` measured out at 26px against our own
   `--control-height-sm` of 32px — while fixing nothing, since asymmetry measured
   1.60px before and after. Apply the trim there and skip the leading.
+
+  **The gate said the opposite of this paragraph, and that is a correction.** As
+  shipped it reported any control whose leading exceeded 1.35 — in an app built
+  on a component library, every control — and acting on the report cut the
+  descenders off two button labels. A check that only sees the DOM cannot tell a
+  control you authored from one you adopted, so it now reports one only when all
+  three of these hold: nothing inside it is **trimmed** (the trim supersedes the
+  leading), nothing inside it **clips** (shrinking a clipping box cuts the ink,
+  per the rule below), and **the line box is the control's whole height** —
+  under a declared height the label is centred either way and the ratio changes
+  nothing. What survives all three is the case the rule is actually about: a
+  control puffed by leading it never declared. In practice that is a control you
+  authored, arrived at by measurement rather than by asking.
 - **Single-line text that shares a row with an icon, or sits in a fixed-height
   box, is trimmed cap-to-baseline.** **[enforced — `test:layout`]**
   `text-box: trim-both cap alphabetic`. This is the mechanism; the leading rule
@@ -226,16 +250,32 @@ the leading of another undoes that, and generally looks wrong.
   element**. Without browser support the label renders as it did before:
   imperfect rather than broken.
 
-  **Only trim a box with visible overflow.** **[enforced — `test:layout`]** The
-  trim works because ascenders and descenders extend past cap and baseline —
-  which is precisely what a clipping box cuts. An `<input>` always clips its own
-  content; a label carrying a truncation utility clips too.
+  **Do not shrink the line box of a box that clips.** **[enforced —
+  `test:layout`]** The trim works because ascenders and descenders extend past
+  cap and baseline — which is precisely what a clipping box cuts. An `<input>`
+  always clips its own content; a label carrying a truncation utility clips too.
+
+  **This is wider than trimming, and stating it as "only trim a box with visible
+  overflow" was too narrow.** `text-box-trim` is one way to shrink a line box.
+  **`line-height` is the other, and it does identical damage.** Measured in a
+  consuming app: a truncating label span taken to `line-height: 1` gave a 14px
+  box around a 19px font box, and the descenders were cut off "Loading" and
+  "Secondary". The gate that reads the trim property was green throughout,
+  because nothing was trimmed.
 
   Note the failure mode, because it is the reason this is a rule rather than a
   judgement call: **a clipped label measures perfectly centred.** It is cut at
-  both ends, so every check asking "is this centred" returns yes. It cannot be
-  caught by inspecting the text's position — only by inspecting the property. A
-  passing gate and a screenshot are not enough here.
+  both ends, so every check asking "is this centred" returns yes — for either
+  cause. What tells the truth is **the box's height against the font's**, which
+  needs to know nothing about how the box got small. A passing gate and a
+  screenshot are not enough here.
+
+  Two gates, because they catch different halves. One reads `text-box-trim` on a
+  clipping element: a regression to no trim measures about a pixel and slips
+  under any tolerance geometry can safely use. The other measures every clipping
+  element that holds text against the font box its text is set in — visually
+  hidden text excluded, since clipping to a pixel is that technique, not a
+  defect.
 
   **Where you cannot trim, lift.** Trimming and lifting are different operations
   and the distinction matters: the trim *shrinks the line box* while the ink
@@ -296,6 +336,18 @@ the leading of another undoes that, and generally looks wrong.
   match. So: **a control with a trimmed label declares its own height**, via
   `--control-height-*` or an explicit floor. This package has no badge-height
   token today; that is a gap, not a licence to leave it to the line box.
+
+  The gate accepts a `min-height` (including `min-block-size`), vertical
+  padding, or a content box measurably taller than its tallest child — which is
+  how `height` and `block-size` are accepted, along with a stretching flex or
+  grid parent. It has to be measured, because a declared height is invisible:
+  `getComputedStyle` reports the used value in pixels whether it was declared or
+  derived, so there is nothing to read. An earlier version tested only the two
+  properties and told an app that pinned a row with `block-size` — the stronger
+  statement of the two, since it pins rather than floors — that it had declared
+  neither. What is deliberately *not* accepted is a box sized by a tall sibling
+  of the label, such as an icon: that is the badge case above, where the height
+  is luck.
 
 ---
 
@@ -518,7 +570,11 @@ fine; one that does otherwise by accident is drift.
 - **An icon-only control is a different thing and needs three answers.**
   It has no label to size against, and nothing for a screen reader to read.
   - Size the icon as a deliberate multiple of the control's own font-size —
-    still `em`, still derived, never a raw pixel value.
+    still `em`, still derived, never a raw pixel value. **Choose a multiple that
+    lands on a whole pixel, or round the line box it produces**: `1.25em` of a
+    14px control is 17.5px, and `line-height: 1` on that is a fractional line
+    box, which the whole-pixel rule above will catch.
+    `line-height: round(1em, 1px)` keeps the size and makes the box 18px.
   - Give it the full `--target-min` square. **[enforced — `test:layout`]** A
     control whose entire affordance is a small glyph is the one that can least
     afford a small hit area.
@@ -530,12 +586,19 @@ fine; one that does otherwise by accident is drift.
   the moment content grows past one viewport, so moving between a short page and
   a long one makes the whole interface twitch. Provided by `base.css`.
 - **Truncate with a title attribute; never wrap in table cells.**
-- **On a fully rounded shape, the inline padding must clear the corner radius.**
+- **On a fully rounded shape, the content must clear the corner radius.**
   **[enforced — `test:layout`]** A pill's radius is half its height, so at the
-  ends the shape curves away from the label — and inline padding smaller than
-  that radius leaves the text sitting *inside* the curve. It reads as uneven
-  against the top and bottom no matter what the numbers say, because the eye
-  measures the gap to the nearest edge and the nearest edge is diagonal.
+  ends the shape curves away from the label — and content starting inside that
+  radius leaves the text sitting *inside* the curve. It reads as uneven against
+  the top and bottom no matter what the numbers say, because the eye measures
+  the gap to the nearest edge and the nearest edge is diagonal.
+
+  What must clear the radius is **the inline padding plus the border**, since
+  the radius is measured on the border box. Deriving `padding-inline` as
+  `radius - border-width` therefore puts the content exactly on the tangent
+  where the straight edge begins, which is what the rule means — and the gate,
+  by comparing padding alone, rejected that derivation by the width of the
+  border.
 
   Geometry, not taste: no choice of nice token values satisfies it, only the
   relationship does. Our own badge shipped at `--space-2` against a 10.5px
@@ -598,7 +661,7 @@ statement above is marked **[enforced]**, one of these is what enforces it.
 | `lint:tokens` | `check-tokens.mjs`: arbitrary Tailwind values (`p-[13px]`), raw hex, Tier 1 references, direct `--ui-*` use, Tailwind `shadow-*` classes — including inside template strings, which an AST linter cannot see |
 | `test:a11y` | axe-core over the specimen in both themes: WCAG 2.0 / 2.1 / 2.2 A and AA — ARIA, focus order, target size at the 24px floor |
 | `test:contrast` | `src/contrast-policy.json` asserted pair by pair in both themes, including pairs no component renders yet |
-| `test:layout` | Table headers match their column's alignment; single-line controls do not inherit prose leading |
+| `test:layout` | The fourteen `layout-checks` assertions — column alignment, icon centring and sizing, target size, field grouping, the trim with its height and clipping consequences, whole-pixel leading, scrollbar gutter, pill geometry — run against the specimen, and against fixtures that prove each one still fires |
 | `test:visual` | Screenshot diff of the specimen, two viewports, both themes |
 
 **What is not enforced:** everything marked **[default]**. Type pairing,

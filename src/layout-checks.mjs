@@ -130,6 +130,11 @@ export const layoutChecks = [
       page.evaluate(`(() => {
         // textarea excluded: multi-line, keeps its size's leading.
         const MAX_RATIO = 1.35
+        const TRIM = CSS.supports('text-box', 'trim-both cap alphabetic')
+        const clips = (el) => {
+          const cs = getComputedStyle(el)
+          return cs.overflowX !== 'visible' || cs.overflowY !== 'visible'
+        }
         const bad = []
         for (const el of document.querySelectorAll('${CONTROLS}')) {
           const cs = getComputedStyle(el)
@@ -137,10 +142,31 @@ export const layoutChecks = [
           const leading = parseFloat(cs.lineHeight)
           if (!size || Number.isNaN(leading)) continue
           const ratio = leading / size
-          if (ratio > MAX_RATIO) {
-            bad.push(el.tagName.toLowerCase() + '.' + (el.className || '(no class)') +
-              ' — ' + size + 'px text with ' + leading + 'px leading (' + ratio.toFixed(2) + 'x)')
-          }
+          if (ratio <= MAX_RATIO) continue
+          const inside = [...el.querySelectorAll('*')]
+          // Three exclusions, because an unscoped version of this check reports
+          // every control in an app built on a component library, and acting on
+          // the report makes that app WORSE. Each one is a case where
+          // line-height: 1 fixes nothing or breaks something.
+          //
+          // 1. The trim supersedes the leading wherever it is applied —
+          //    measured, a trimmed label is identical at leading 1 and 1.6.
+          if (TRIM && [el, ...inside].some((n) => getComputedStyle(n).textBoxTrim !== 'none')) continue
+          // 2. A label span that CLIPS is its own line box, so shrinking the
+          //    leading shrinks the box while the ink stays put — the same
+          //    damage as trimming one. Measured in a consuming app: a 19px font
+          //    box in a 14px truncating span, descenders cut off "Loading".
+          if (inside.some((n) => (n.textContent || '').trim() && clips(n))) continue
+          // 3. Leading only puffs a control whose height it DRIVES. Under a
+          //    declared height the label is centred either way and the ratio is
+          //    inert, which is the state of every control worth shipping.
+          const contentH = el.getBoundingClientRect().height -
+            parseFloat(cs.borderTopWidth) - parseFloat(cs.borderBottomWidth) -
+            parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom)
+          if (Math.abs(contentH - leading) > 0.5) continue
+          bad.push(el.tagName.toLowerCase() + '.' + (el.className || '(no class)') +
+            ' — ' + size + 'px text with ' + leading + 'px leading (' + ratio.toFixed(2) +
+            'x), and that line box is the whole height of the control')
         }
         return [...new Set(bad)]
       })()`),
@@ -341,9 +367,27 @@ export const layoutChecks = [
           const cs = getComputedStyle(control)
           const floored = cs.minHeight !== '0px' && cs.minHeight !== 'auto'
           const padded = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom) > 0
-          if (!floored && !padded) {
+          // A declared height is invisible to getComputedStyle: height and
+          // block-size both report the USED value in px whether they were
+          // declared or derived, so there is nothing to read. Measure instead:
+          // a content box taller than its tallest child cannot have come from
+          // the line box. That accepts height and block-size (which pin rather
+          // than floor, and were flagged as "neither" by an earlier version of
+          // this check), aspect-ratio, and a stretching flex or grid parent.
+          //
+          // It deliberately does NOT accept a box sized by a tall SIBLING of
+          // the label, such as an icon: that is the badge case this rule calls
+          // out — the height is luck, and a text-only badge beside an icon
+          // badge will not match it.
+          const tallest = [...control.children].reduce(
+            (h, el) => Math.max(h, el.getBoundingClientRect().height), 0)
+          const contentH = control.getBoundingClientRect().height -
+            parseFloat(cs.borderTopWidth) - parseFloat(cs.borderBottomWidth) -
+            parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom)
+          const sized = contentH > tallest + 0.5
+          if (!floored && !padded && !sized) {
             bad.push((control.className || control.tagName) +
-              ' — trimmed label, but the control has neither a min-height nor vertical padding, so its height is whatever the trimmed line box happens to be')
+              ' — trimmed label, but the control has no min-height, no vertical padding, and no height beyond its tallest child, so its height is whatever the trimmed line box happens to be')
           }
         }
         return [...new Set(bad)]
@@ -352,8 +396,51 @@ export const layoutChecks = [
 
 
   {
+    name: 'no text sits in a box shorter than the font it is set in',
+    rule: 'Type — do not shrink the line box of a box that clips',
+    run: (page) =>
+      page.evaluate(`(() => {
+        const bad = []
+        // One canvas for the whole walk: this check measures every clipping
+        // element on the page, and a context per element is a page-sized cost
+        // in an app rather than a specimen.
+        const ctx = document.createElement('canvas').getContext('2d')
+        // The general form of the trim rule below, and the reason it is stated
+        // generally: TRIMMING is one way to shrink a line box inside a box that
+        // clips, and LINE-HEIGHT is another. Both cut the ink at cap and
+        // baseline, and the property check below sees only the first — it
+        // passed in a consuming app while leading of 1 on a truncating span cut
+        // the descenders off "Loading".
+        //
+        // Measuring the text's POSITION cannot catch either one: a clipping box
+        // cuts at both ends, so the damage measures perfectly centred. Height
+        // against the font box is what tells the truth, and it needs to know
+        // nothing about how the box got small.
+        for (const el of document.querySelectorAll('*')) {
+          const cs = getComputedStyle(el)
+          if (cs.overflowX === 'visible' && cs.overflowY === 'visible') continue
+          const text = (el.textContent || '').trim()
+          if (!text || el.children.length) continue
+          const box = el.getBoundingClientRect()
+          // Visually-hidden text is clipped to 1px on purpose — that IS the
+          // technique, and it is the only false positive this check hits.
+          if (box.height <= 1 || box.width <= 1) continue
+          ctx.font = cs.fontWeight + ' ' + cs.fontSize + ' ' + cs.fontFamily
+          const m = ctx.measureText(text)
+          const fontBox = m.fontBoundingBoxAscent + m.fontBoundingBoxDescent
+          if (box.height + 0.5 < fontBox) {
+            bad.push((el.className || el.tagName) + ' — ' + box.height.toFixed(1) +
+              'px box clipping a ' + fontBox.toFixed(1) +
+              'px font box, so its ascenders and descenders are cut')
+          }
+        }
+        return [...new Set(bad)]
+      })()`),
+  },
+
+  {
     name: 'nothing is trimmed inside a box that clips it',
-    rule: 'Type — only trim a box with visible overflow',
+    rule: 'Type — do not shrink the line box of a box that clips',
     run: (page) =>
       page.evaluate(`(() => {
         if (!CSS.supports('text-box', 'trim-both cap alphabetic')) return []
@@ -452,12 +539,12 @@ export const layoutChecks = [
   },
   {
     name: 'a pill clears its own curve',
-    rule: 'Layout hints — inline padding clears the corner radius',
+    rule: 'Layout hints — the content clears the corner radius',
     run: (page) =>
       page.evaluate(`(() => {
         const bad = []
         // Only FULLY ROUNDED shapes: a pill's radius is half its height, so the
-        // label sits inside the curve unless the inline padding clears it. A
+        // label sits inside the curve unless the content inset clears it. A
         // gently rounded shape is unaffected — a 6px radius under 12px padding
         // already clears — so scoping here reports defects rather than noise.
         for (const el of document.querySelectorAll('*')) {
@@ -469,10 +556,19 @@ export const layoutChecks = [
           const effective = Math.min(radius, r.height / 2)
           if (effective < r.height / 2 - 0.5) continue           // not a pill
           if (!(el.textContent || '').trim()) continue           // icon-only
-          const pad = Math.min(parseFloat(cs.paddingLeft), parseFloat(cs.paddingRight))
-          if (pad + 0.5 < effective) {
-            bad.push((el.className || el.tagName) + ' — ' + pad.toFixed(1) +
-              'px inline padding against a ' + effective.toFixed(1) +
+          // Border + padding, not padding alone: the radius is measured on the
+          // BORDER box, so what has to clear it is where the content starts —
+          // border-width in from that edge, then the padding. Deriving
+          // padding-inline as radius - border-width puts the content exactly on
+          // the tangent where the straight edge begins, which is what the rule
+          // means; asserting padding >= radius would reject that by the width
+          // of the border.
+          const inset = Math.min(
+            parseFloat(cs.borderLeftWidth) + parseFloat(cs.paddingLeft),
+            parseFloat(cs.borderRightWidth) + parseFloat(cs.paddingRight))
+          if (inset + 0.5 < effective) {
+            bad.push((el.className || el.tagName) + ' — ' + inset.toFixed(1) +
+              'px content inset against a ' + effective.toFixed(1) +
               'px radius, so the label sits inside the curve')
           }
         }
@@ -482,21 +578,33 @@ export const layoutChecks = [
 ]
 
 /**
- * Checks that require the app to pin its font.
+ * Checks that assert a rendered outcome rather than a declaration.
  *
- * These assert a rendered outcome that depends on font metrics, so they cannot
- * be gated in a layer whose `--font-sans` is a brand slot — measured, the same
- * specimen reports 0 controls off the pixel grid under three faces and 18 under
- * a fourth. An app that pins its font should absolutely run them; this package
- * cannot, and pretending otherwise is how a release gate fails for the font CI
- * happens to have rather than for a defect.
+ * **The precondition is rounded leading and declared control heights, not a
+ * pinned font** — which is a correction. These shipped as `pinnedFontChecks`
+ * because gating them here failed a release under CI's fonts: the same specimen
+ * reports 0 controls off the pixel grid under three faces and 18 under a
+ * fourth. But an adopting app whose `--font-sans` is still this package's
+ * system stack — so Linux CI and a Windows author render different faces —
+ * passes on both, because `round(…, 1px)` is integral whatever the face, so
+ * block heights are integral, so controls land on the grid regardless of font
+ * metrics.
  *
- *   import { layoutChecks, pinnedFontChecks } from '@widenode/ui-foundation/layout-checks'
- *   for (const check of [...layoutChecks, ...pinnedFontChecks]) { ... }
+ * What propagates a fraction is a box sized by font metrics rather than by
+ * leading: a TRIMMED label's box is exactly that. It stops there if the row
+ * declares its height, which the trim rule requires anyway. So:
+ *
+ *   rounded leading + declared control heights = these are portable for you.
+ *
+ * This package still cannot gate them, because its specimen is the thing that
+ * proves the "18 under a fourth face" case exists.
+ *
+ *   import { layoutChecks, pixelGridChecks } from '@widenode/ui-foundation/layout-checks'
+ *   for (const check of [...layoutChecks, ...pixelGridChecks]) { ... }
  *
  * @type {LayoutCheck[]}
  */
-export const pinnedFontChecks = [
+export const pixelGridChecks = [
   {
     name: 'controls sit on the device pixel grid',
     rule: 'Type — leading resolves to whole pixels',
@@ -530,3 +638,11 @@ export const pinnedFontChecks = [
       })()`),
   },
 ]
+
+/**
+ * @deprecated Renamed to `pixelGridChecks` — the precondition is rounded
+ * leading, not a pinned font. Kept because removing an export is breaking, and
+ * this one is wired into consumers' spec files.
+ * @type {LayoutCheck[]}
+ */
+export const pinnedFontChecks = pixelGridChecks

@@ -190,10 +190,12 @@ they run against your routes rather than only this package's specimen:
 import { layoutChecks } from '@widenode/ui-foundation/layout-checks'
 ```
 
-Nine checks — header alignment, control leading, icon centring and sizing,
-icon-only target size, field grouping, cap-to-baseline trimming and its height
-floor, scrollbar gutter. Each returns a list of offenders. The specimen runs the
-same module, and every check is verified to fail against its own defect.
+Fourteen checks — header alignment, control leading, icon centring and sizing,
+icon-only target size, field grouping, cap-to-baseline trimming with its height
+floor and its clipping hazard, whole-pixel leading, scrollbar gutter, pill
+geometry. Each returns a list of offenders, and they ship with types. The
+specimen runs the same module, and the ones that report on markup a component
+library produces have fixtures proving they still fail against their own defect.
 Wiring is in [`INTEGRATION.md`](INTEGRATION.md).
 
 ## Specimen

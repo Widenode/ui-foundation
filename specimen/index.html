@@ -97,6 +97,26 @@ body { transition: background var(--duration-base) var(--ease-out); }
    which is exact because control labels use line-height: 1. */
 .icon { display: block; flex: none; width: 1em; height: 1em; }
 
+/* Trim the label's block box to cap height over, baseline under. line-height:1
+   fixes the box; this fixes where the glyphs sit inside it. A font reserves more
+   room above the baseline than the caps use, so a centred untrimmed box puts the
+   label low — flex centring exact, label still wrong.
+
+   Do NOT trim to the ink (`cap text`): ascenders and descenders extend past cap
+   and baseline by design, so an ink-fitted box is shorter than what is painted
+   and the label rides high. Measured here, air above cap vs below baseline:
+   no trim 2.0/1.0, `cap text` -0.2/3.2, `ex alphabetic` 0.3/2.8,
+   `cap alphabetic` 1.3/1.7. Cap-to-baseline also lands an icon within 0.2px of
+   the capital beside it, which is the alignment the eye is actually judging.
+
+   This is what keeps "Queued" and "Passing" at the same height instead of each
+   label balancing its own descender. Without support it renders as before —
+   imperfect rather than broken. */
+.btn__label,
+.badge__label {
+  text-box: trim-both cap alphabetic;
+}
+
 .btn {
   display: inline-flex; align-items: center; justify-content: center; gap: var(--gap-tight);
   min-height: var(--control-height-md);
@@ -231,7 +251,7 @@ select.input { appearance: none; background-image: linear-gradient(45deg, transp
     <h1 class="topbar__title">Foundation layer — specimen</h1>
     <p class="topbar__meta">Balanced density · border-first · 4–6px radius · placeholder brand</p>
   </div>
-  <button class="btn btn--outline btn--sm" id="theme-toggle" aria-pressed="false">Dark</button>
+  <button class="btn btn--outline btn--sm" id="theme-toggle" aria-pressed="false"><span class="btn__label">Dark</span></button>
 </header>
 
 <main class="page">
@@ -367,15 +387,15 @@ select.input { appearance: none; background-image: linear-gradient(45deg, transp
     <div class="block">
       <h3 class="block__title">Buttons</h3>
       <div class="row">
-        <button class="btn btn--solid"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Save changes</button>
-        <button class="btn btn--outline">Cancel</button>
-        <button class="btn btn--ghost">Reset filters</button>
-        <button class="btn btn--danger">Delete order</button>
-        <button class="btn btn--outline" disabled>Unavailable</button>
+        <button class="btn btn--solid"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span class="btn__label">Save changes</span></button>
+        <button class="btn btn--outline"><span class="btn__label">Cancel</span></button>
+        <button class="btn btn--ghost"><span class="btn__label">Reset filters</span></button>
+        <button class="btn btn--danger"><span class="btn__label">Delete order</span></button>
+        <button class="btn btn--outline" disabled><span class="btn__label">Unavailable</span></button>
       </div>
       <div class="row" style="margin-top:var(--gap-related)">
-        <button class="btn btn--ok">Approve order</button>
-        <button class="btn btn--warn">Flag for review</button>
+        <button class="btn btn--ok"><span class="btn__label">Approve order</span></button>
+        <button class="btn btn--warn"><span class="btn__label">Flag for review</span></button>
         <span class="muted" style="font-size:var(--text-xs)">Each solid fill names its own text colour. Only warn is near-black — no yellow that still reads as yellow carries white text at 4.5:1.</span>
       </div>
       <div class="row" style="margin-top:var(--gap-related)">
@@ -384,9 +404,9 @@ select.input { appearance: none; background-image: linear-gradient(45deg, transp
         <span class="muted" style="font-size:var(--text-xs)">Icon-only controls get the full 44px target and an aria-label — there is no visible text to read.</span>
       </div>
       <div class="row" style="margin-top:var(--gap-related)">
-        <button class="btn btn--outline btn--sm">Small</button>
-        <button class="btn btn--outline">Medium</button>
-        <button class="btn btn--outline btn--lg">Large (44px target)</button>
+        <button class="btn btn--outline btn--sm"><span class="btn__label">Small</span></button>
+        <button class="btn btn--outline"><span class="btn__label">Medium</span></button>
+        <button class="btn btn--outline btn--lg"><span class="btn__label">Large (44px target)</span></button>
       </div>
     </div>
 
@@ -459,11 +479,11 @@ select.input { appearance: none; background-image: linear-gradient(45deg, transp
             </tr>
           </thead>
           <tbody>
-            <tr><td class="truncate" title="Anodised aluminium laptop stand, adjustable height, matte charcoal finish">Anodised aluminium laptop stand, adjustable height, matte charcoal finish</td><td class="mono muted">…computer.accessory</td><td><span class="badge badge--ok"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>In stock</span></td><td class="num">2</td><td class="num">64.00</td><td class="num">128.00</td></tr>
-            <tr><td class="truncate" title="14&quot; ultraportable notebook">14&quot; ultraportable notebook</td><td class="mono muted">…computer.laptop</td><td><span class="badge badge--warn"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>Low</span></td><td class="num">1</td><td class="num">1,499.00</td><td class="num">1,499.00</td></tr>
-            <tr><td class="truncate" title="USB-C hub">USB-C hub</td><td class="mono muted">…computer.accessory</td><td><span class="badge badge--bad"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>Backordered</span></td><td class="num">3</td><td class="num">39.95</td><td class="num">119.85</td></tr>
-            <tr><td class="truncate" title="Extended warranty, 36 months">Extended warranty, 36 months</td><td class="mono muted">…service.warranty</td><td><span class="badge badge--neutral"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>Pending</span></td><td class="num">1</td><td class="num">180.00</td><td class="num">180.00</td></tr>
-            <tr><td class="truncate" title="Braided charging cable, 2 m">Braided charging cable, 2 m</td><td class="mono muted">…computer.accessory</td><td><span class="badge badge--ok">In stock</span></td><td class="num">12</td><td class="num">11.50</td><td class="num">138.00</td></tr>
+            <tr><td class="truncate" title="Anodised aluminium laptop stand, adjustable height, matte charcoal finish">Anodised aluminium laptop stand, adjustable height, matte charcoal finish</td><td class="mono muted">…computer.accessory</td><td><span class="badge badge--ok"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span class="badge__label">In stock</span></span></td><td class="num">2</td><td class="num">64.00</td><td class="num">128.00</td></tr>
+            <tr><td class="truncate" title="14&quot; ultraportable notebook">14&quot; ultraportable notebook</td><td class="mono muted">…computer.laptop</td><td><span class="badge badge--warn"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg><span class="badge__label">Low</span></span></td><td class="num">1</td><td class="num">1,499.00</td><td class="num">1,499.00</td></tr>
+            <tr><td class="truncate" title="USB-C hub">USB-C hub</td><td class="mono muted">…computer.accessory</td><td><span class="badge badge--bad"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg><span class="badge__label">Backordered</span></span></td><td class="num">3</td><td class="num">39.95</td><td class="num">119.85</td></tr>
+            <tr><td class="truncate" title="Extended warranty, 36 months">Extended warranty, 36 months</td><td class="mono muted">…service.warranty</td><td><span class="badge badge--neutral"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg><span class="badge__label">Pending</span></span></td><td class="num">1</td><td class="num">180.00</td><td class="num">180.00</td></tr>
+            <tr><td class="truncate" title="Braided charging cable, 2 m">Braided charging cable, 2 m</td><td class="mono muted">…computer.accessory</td><td><span class="badge badge--ok"><span class="badge__label">In stock</span></span></td><td class="num">12</td><td class="num">11.50</td><td class="num">138.00</td></tr>
           </tbody>
         </table>
       </div>
@@ -474,7 +494,7 @@ select.input { appearance: none; background-image: linear-gradient(45deg, transp
       <div class="empty">
         <p class="empty__title">Nothing in this cart yet</p>
         <p class="empty__body">Items you add will appear here with live pricing and stock.</p>
-        <button class="btn btn--solid">Browse catalogue</button>
+        <button class="btn btn--solid"><span class="btn__label">Browse catalogue</span></button>
       </div>
     </div>
   </section>

@@ -149,8 +149,15 @@ the leading of another undoes that, and generally looks wrong.
   ```
 
   `base.css` does this for `body`. Anywhere else you set leading, do the same.
-  Measured here, restoring ratio leading knocks 18 controls off the grid on the
-  specimen alone.
+
+  **What is gated here is the declaration, not the position** — and that is a
+  correction to an earlier draft of this rule. Asserting that controls land on
+  the grid is the better test, but it is not portable: a trimmed label's box is
+  font metrics, so the same specimen measures 0 controls off the grid under
+  three faces and **18 under a fourth**. Gating the outcome in a layer whose
+  `--font-sans` is a brand slot fails for the font CI happens to have rather
+  than for a defect, which is exactly how it failed a release. The outcome check
+  ships as `pinnedFontChecks` for apps that pin their font.
 
   **This is invisible under browser zoom**, which is the trap: more device pixels
   per CSS pixel makes the fraction resolvable, so it renders correctly at 125%

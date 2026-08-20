@@ -556,7 +556,7 @@ select.input { appearance: none; background-image: linear-gradient(45deg, transp
   ];
   document.getElementById('type-scale').innerHTML = sizes.map(function (s) {
     return '<div class="type-row"><div class="type-row__label">' + s[0] + '</div>' +
-           '<div style="font-size:var(--text-' + s[0] + ');line-height:var(--leading-' + s[0] +
+           '<div style="font-size:var(--text-' + s[0] + ');line-height:round(calc(var(--leading-' + s[0] + ') * 1em), 1px' +
            ');letter-spacing:var(--tracking-' + s[0] + ')">' + s[1] + '</div></div>';
   }).join('');
 

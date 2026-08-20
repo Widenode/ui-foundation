@@ -415,33 +415,26 @@ export const layoutChecks = [
       })()`),
   },
 
+
   {
-    name: 'controls sit on the device pixel grid',
+    name: 'leading resolves to whole pixels',
     rule: 'Type — leading resolves to whole pixels',
     run: (page) =>
       page.evaluate(`(() => {
         const bad = []
-        // Assert the OUTCOME, not the declaration. The fraction arrives from
-        // whatever markup sits above a control, so proving that the type classes
-        // carry rounded leading says nothing about a control three sections down.
-        //
-        // Why it matters: text baselines snap to whole device pixels while box
-        // edges antialias at their true position, so a control at y=355.656
-        // renders its label a whole pixel off centre however exact its CSS is.
-        // Browser zoom HIDES this — more device pixels per CSS pixel makes the
-        // fraction resolvable — so judge vertical placement at 100% on a 1x
-        // display, and never trust a zoomed screenshot for it.
-        //
-        // Table descendants are excluded: row heights are distributed by the
-        // table layout algorithm, which makes no whole-pixel guarantee and is
-        // not something a token system can reach.
-        for (const el of document.querySelectorAll('button, input, select, textarea, .badge')) {
-          if (el.closest('table')) continue
-          const top = el.getBoundingClientRect().top
-          const f = top % 1
-          if (Math.min(f, 1 - f) > 0.01) {
-            bad.push((el.className || el.tagName) + ' — top ' + top.toFixed(3) +
-              ', off the pixel grid, so its label cannot render centred')
+        // The DECLARATION, not the position. Position is the better test in an
+        // app that pins its font — see pinnedFontChecks — but it cannot be
+        // gated in a brand-agnostic layer: a trimmed label's box is font
+        // metrics, so the same page measures 0 controls off the grid on one
+        // face and 18 on another. This check is portable because it depends on
+        // font-SIZE, which the token scale fixes, not on font metrics.
+        for (const el of document.querySelectorAll('*')) {
+          const lh = getComputedStyle(el).lineHeight
+          if (!lh.endsWith('px')) continue          // 'normal' is the UA's business
+          const v = parseFloat(lh)
+          if (Math.abs(v - Math.round(v)) > 0.01) {
+            bad.push((el.className || el.tagName) + ' — line-height ' + lh +
+              ', so every element below it starts on a fractional y')
           }
         }
         return [...new Set(bad)]
@@ -481,6 +474,56 @@ export const layoutChecks = [
             bad.push((el.className || el.tagName) + ' — ' + pad.toFixed(1) +
               'px inline padding against a ' + effective.toFixed(1) +
               'px radius, so the label sits inside the curve')
+          }
+        }
+        return [...new Set(bad)]
+      })()`),
+  },
+]
+
+/**
+ * Checks that require the app to pin its font.
+ *
+ * These assert a rendered outcome that depends on font metrics, so they cannot
+ * be gated in a layer whose `--font-sans` is a brand slot — measured, the same
+ * specimen reports 0 controls off the pixel grid under three faces and 18 under
+ * a fourth. An app that pins its font should absolutely run them; this package
+ * cannot, and pretending otherwise is how a release gate fails for the font CI
+ * happens to have rather than for a defect.
+ *
+ *   import { layoutChecks, pinnedFontChecks } from '@widenode/ui-foundation/layout-checks'
+ *   for (const check of [...layoutChecks, ...pinnedFontChecks]) { ... }
+ *
+ * @type {LayoutCheck[]}
+ */
+export const pinnedFontChecks = [
+  {
+    name: 'controls sit on the device pixel grid',
+    rule: 'Type — leading resolves to whole pixels',
+    run: (page) =>
+      page.evaluate(`(() => {
+        const bad = []
+        // Assert the OUTCOME, not the declaration. The fraction arrives from
+        // whatever markup sits above a control, so proving that the type classes
+        // carry rounded leading says nothing about a control three sections down.
+        //
+        // Why it matters: text baselines snap to whole device pixels while box
+        // edges antialias at their true position, so a control at y=355.656
+        // renders its label a whole pixel off centre however exact its CSS is.
+        // Browser zoom HIDES this — more device pixels per CSS pixel makes the
+        // fraction resolvable — so judge vertical placement at 100% on a 1x
+        // display, and never trust a zoomed screenshot for it.
+        //
+        // Table descendants are excluded: row heights are distributed by the
+        // table layout algorithm, which makes no whole-pixel guarantee and is
+        // not something a token system can reach.
+        for (const el of document.querySelectorAll('button, input, select, textarea, .badge')) {
+          if (el.closest('table')) continue
+          const top = el.getBoundingClientRect().top
+          const f = top % 1
+          if (Math.min(f, 1 - f) > 0.01) {
+            bad.push((el.className || el.tagName) + ' — top ' + top.toFixed(3) +
+              ', off the pixel grid, so its label cannot render centred')
           }
         }
         return [...new Set(bad)]

@@ -244,7 +244,16 @@ for (const check of layoutChecks) {
 }
 ```
 
-Nine checks, each returning a list of human-readable offenders. They need
+```ts
+// If your app pins its font — most do — run these too. They assert rendered
+// outcomes that depend on font metrics, which is why the foundation itself
+// cannot gate them.
+import { layoutChecks, pinnedFontChecks } from '@widenode/ui-foundation/layout-checks'
+
+for (const check of [...layoutChecks, ...pinnedFontChecks]) { /* as above */ }
+```
+
+Thirteen checks, each returning a list of human-readable offenders. They need
 nothing but a `page` with an `evaluate` method, so this adds no dependency —
 and the specimen runs the same module, so what you get is what CI here proves.
 

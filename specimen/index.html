@@ -211,7 +211,11 @@ select.input { appearance: none; background-image: linear-gradient(45deg, transp
 .table .num { text-align: right; font-variant-numeric: tabular-nums; }
 .table .truncate { max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-.badge { display: inline-flex; align-items: center; gap: var(--gap-tight); padding: 4px var(--space-2); font-size: var(--text-2xs); line-height: 1; font-weight: var(--weight-medium); border-radius: var(--radius-full); border: var(--border-width) solid; }
+/* Inline padding is --space-3, not --space-2: on a fully rounded shape the
+   inline padding has to clear the corner radius, which here is half the height
+   (10.5px). Anything less and the label sits inside the curve, so the ends read
+   tighter than the top and bottom however even the numbers look. */
+.badge { display: inline-flex; align-items: center; gap: var(--gap-tight); padding: 4px var(--space-3); font-size: var(--text-2xs); line-height: 1; font-weight: var(--weight-medium); border-radius: var(--radius-full); border: var(--border-width) solid; }
 .badge--ok { background: var(--status-ok-bg); border-color: var(--status-ok-border); color: var(--status-ok-text); }
 .badge--warn { background: var(--status-warn-bg); border-color: var(--status-warn-border); color: var(--status-warn-text); }
 .badge--bad { background: var(--status-bad-bg); border-color: var(--status-bad-border); color: var(--status-bad-text); }

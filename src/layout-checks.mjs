@@ -457,4 +457,33 @@ export const layoutChecks = [
          ['scrollbar-gutter on the root is ' + getComputedStyle(document.documentElement).scrollbarGutter + ', not stable']`,
       ),
   },
+  {
+    name: 'a pill clears its own curve',
+    rule: 'Layout hints — inline padding clears the corner radius',
+    run: (page) =>
+      page.evaluate(`(() => {
+        const bad = []
+        // Only FULLY ROUNDED shapes: a pill's radius is half its height, so the
+        // label sits inside the curve unless the inline padding clears it. A
+        // gently rounded shape is unaffected — a 6px radius under 12px padding
+        // already clears — so scoping here reports defects rather than noise.
+        for (const el of document.querySelectorAll('*')) {
+          const r = el.getBoundingClientRect()
+          if (!r.height || !r.width) continue
+          const cs = getComputedStyle(el)
+          const radius = parseFloat(cs.borderTopLeftRadius)
+          if (!radius) continue
+          const effective = Math.min(radius, r.height / 2)
+          if (effective < r.height / 2 - 0.5) continue           // not a pill
+          if (!(el.textContent || '').trim()) continue           // icon-only
+          const pad = Math.min(parseFloat(cs.paddingLeft), parseFloat(cs.paddingRight))
+          if (pad + 0.5 < effective) {
+            bad.push((el.className || el.tagName) + ' — ' + pad.toFixed(1) +
+              'px inline padding against a ' + effective.toFixed(1) +
+              'px radius, so the label sits inside the curve')
+          }
+        }
+        return [...new Set(bad)]
+      })()`),
+  },
 ]

@@ -523,6 +523,18 @@ fine; one that does otherwise by accident is drift.
   the moment content grows past one viewport, so moving between a short page and
   a long one makes the whole interface twitch. Provided by `base.css`.
 - **Truncate with a title attribute; never wrap in table cells.**
+- **On a fully rounded shape, the inline padding must clear the corner radius.**
+  **[enforced — `test:layout`]** A pill's radius is half its height, so at the
+  ends the shape curves away from the label — and inline padding smaller than
+  that radius leaves the text sitting *inside* the curve. It reads as uneven
+  against the top and bottom no matter what the numbers say, because the eye
+  measures the gap to the nearest edge and the nearest edge is diagonal.
+
+  Geometry, not taste: no choice of nice token values satisfies it, only the
+  relationship does. Our own badge shipped at `--space-2` against a 10.5px
+  radius and needed `--space-3`. It does not bind on a gently rounded shape — a
+  6px radius under 12px of padding already clears — which is why it is stated
+  for fully rounded shapes specifically.
 - **A label that shares a row with an icon gets its own element**, never a bare
   text node. `text-box` cannot trim an anonymous flex item, so the markup has to
   give it something to trim. Same class of constraint as top-label pairing: it

@@ -44,6 +44,7 @@
     "./base.css": "./src/base.css",
     "./adapters/nuxt-ui.css": "./src/adapters/nuxt-ui.css",
     "./contrast-policy.json": "./src/contrast-policy.json",
+    "./layout-checks": "./src/layout-checks.mjs",
     "./stylelint": "./stylelint/index.json",
     "./scripts/check-tokens.mjs": "./scripts/check-tokens.mjs",
     "./RULES.md": "./RULES.md",

@@ -216,6 +216,10 @@ npm run test:visual:update
 
 ## Publishing
 
+**The full runbook is [`RELEASING.md`](RELEASING.md)** — procedure, failure
+modes, tag deletion, baselines, and the invariants that keep a green PR meaning
+a publishable commit.
+
 Maintainers only. Publishing happens from GitHub Actions on a `v*` tag via npm
 trusted publishing (OIDC). There is no `NPM_TOKEN` secret and there must never
 be one.

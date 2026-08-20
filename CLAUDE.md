@@ -16,6 +16,8 @@ Public repo, maintainer-approved merges. Published to npm as
 | `specimen/index.html` | Reference rendering + the test target |
 | `stylelint/index.json` | Shared config consumers extend |
 | `scripts/check-tokens.mjs` | Text-level backstop for the Tier 2 rule |
+| `src/layout-checks.mjs` | The `[enforced]` rules as assertions, shipped so consuming apps run them too |
+| `RELEASING.md` | Release, tag and CI plumbing. Maintainer runbook, not shipped |
 
 **This is the only repo where Tier 1 primitives (`--n-*`, `--a-*`) live.**
 Consuming apps override them in their own `brand.css` and nowhere else.
@@ -35,18 +37,34 @@ Consuming apps override them in their own `brand.css` and nowhere else.
 
 ## Publishing
 
-- Trusted publishing (OIDC) from Actions on `v*` tags. There is no
-  `NPM_TOKEN` secret and there must never be one.
-- `publishConfig.access` is `public` — scoped packages default to private.
-- Before any release: `npm pack --dry-run` and check the file list.
-- Never publish from a local machine except the very first publish.
+**`RELEASING.md` is the runbook — read it before touching a tag, a workflow or
+the branch ruleset.** It carries the procedure and the failure modes; these are
+the invariants worth knowing without opening it:
+
+- **Merging never publishes. Pushing a `v*` tag does.** Tag creation is
+  restricted to `@Widenode/developers`, so it *is* the publish authorisation.
+- Trusted publishing (OIDC). There is no `NPM_TOKEN` and there must never be one.
+- The tag must match `package.json`, and you must `git pull` before tagging.
+- **Deleting a failed tag is two-sided** — remote *and* local. Skipping the
+  local half fails silently and looks like the remote delete did not work.
+- **CI runs `npm run verify` in the same container `prepack` uses.** Do not let
+  those diverge: it is what makes a green PR mean a publishable commit, and
+  three releases failed before it did.
+- The branch ruleset requires a check named exactly `verify`. Renaming the CI
+  job without repointing the ruleset blocks every PR forever.
+- **Never gate anything font-dependent here.** `--font-sans` is a brand slot and
+  CI's fonts are not yours; that mistake failed two releases.
 
 ## Gates
 
-`npm run lint && npm run test:a11y && npm run test:visual`
+`npm run verify` — lint, a11y, contrast, layout, visual. That exact command is
+what CI and `prepack` both run, in the pinned Playwright container.
 
-Visual baselines under `tests/**/__screenshots__` are **committed artifacts**.
-Regenerate deliberately with `test:visual:update`, never to make a test pass.
+Visual baselines under `tests/__screenshots__` are **committed artifacts**, and
+only the **Linux** set is committed; `-win32` and `-darwin` are gitignored, so
+running `test:visual` locally writes your own platform's copies harmlessly.
+Regenerate the committed ones with the **Visual baselines** workflow, never with
+a local `--update-snapshots` — see `RELEASING.md`.
 
 ## Workflow
 

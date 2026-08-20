@@ -245,17 +245,27 @@ for (const check of layoutChecks) {
 ```
 
 ```ts
-// If your app pins its font — most do — run these too. They assert rendered
-// outcomes that depend on font metrics, which is why the foundation itself
-// cannot gate them.
-import { layoutChecks, pinnedFontChecks } from '@widenode/ui-foundation/layout-checks'
+// Run these too if your leading is rounded and your controls declare their
+// heights — RULES.md's "Leading resolves to whole pixels" and "a control with a
+// trimmed label declares its own height". They assert a rendered outcome rather
+// than a declaration, which is why this package cannot gate them itself.
+import { layoutChecks, pixelGridChecks } from '@widenode/ui-foundation/layout-checks'
 
-for (const check of [...layoutChecks, ...pinnedFontChecks]) { /* as above */ }
+for (const check of [...layoutChecks, ...pixelGridChecks]) { /* as above */ }
 ```
 
-Thirteen checks, each returning a list of human-readable offenders. They need
+`pixelGridChecks` was called `pinnedFontChecks` in 0.4.0, and the old name still
+works. It was renamed because pinning a font is not what makes it pass: a
+leading rounded with `round(…, 1px)` is integral whatever face CI resolves, so
+an app on the system stack passes on Linux and Windows alike. What actually
+propagates a fraction is a box sized by font metrics — a **trimmed** label — and
+a declared row height stops it there.
+
+Fourteen checks, each returning a list of human-readable offenders. They need
 nothing but a `page` with an `evaluate` method, so this adds no dependency —
 and the specimen runs the same module, so what you get is what CI here proves.
+Types ship with it: `LayoutCheck` is exported, and `run` takes any object with
+an `evaluate` method rather than importing Playwright's `Page`.
 
 **Add every route.** A check can only see what is rendered; an unlisted route is
 unchecked. This is the same trap as the specimen's — the gates were green for
@@ -263,6 +273,14 @@ months against pages that did not exist yet.
 
 Icon detection is structural rather than `svg`-only, so it works with an icon
 font (Font Awesome, Material Symbols) as well as inline SVG.
+
+**A check that reports your whole component library is a bug in the check.**
+Two of these did, in 0.4.0, and both are fixed rather than documented around:
+`single-line controls do not inherit prose leading` now stays quiet unless the
+leading actually drives the control's height, and the pill check measures border
+plus padding rather than padding alone. If one still reports something you did
+not author and cannot sensibly change, that is worth an issue — skipping it
+locally means the next release cannot know it went wrong.
 
 Text-level backstop, for `.vue` files:
 

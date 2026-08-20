@@ -44,7 +44,10 @@
     "./base.css": "./src/base.css",
     "./adapters/nuxt-ui.css": "./src/adapters/nuxt-ui.css",
     "./contrast-policy.json": "./src/contrast-policy.json",
-    "./layout-checks": "./src/layout-checks.mjs",
+    "./layout-checks": {
+      "types": "./src/layout-checks.d.ts",
+      "default": "./src/layout-checks.mjs"
+    },
     "./stylelint": "./stylelint/index.json",
     "./scripts/check-tokens.mjs": "./scripts/check-tokens.mjs",
     "./RULES.md": "./RULES.md",
@@ -70,7 +73,7 @@
     "lint:tokens": "node scripts/check-tokens.mjs src",
     "test:a11y": "playwright test tests/a11y.spec.ts",
     "test:contrast": "playwright test tests/contrast.spec.ts",
-    "test:layout": "playwright test tests/layout.spec.ts",
+    "test:layout": "playwright test tests/layout.spec.ts tests/layout-checks.spec.ts",
     "test:visual": "playwright test tests/visual.spec.ts",
     "test:visual:update": "playwright test tests/visual.spec.ts --update-snapshots",
     "verify": "npm run lint && npm run test:a11y && npm run test:contrast && npm run test:layout && npm run test:visual",

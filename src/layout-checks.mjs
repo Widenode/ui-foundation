@@ -350,6 +350,68 @@ export const layoutChecks = [
       })()`),
   },
 
+
+  {
+    name: 'nothing is trimmed inside a box that clips it',
+    rule: 'Type — only trim a box with visible overflow',
+    run: (page) =>
+      page.evaluate(`(() => {
+        if (!CSS.supports('text-box', 'trim-both cap alphabetic')) return []
+        const bad = []
+        // A document walk, not an allow-list of "safe" elements. An allow-list
+        // is what shipped this bug twice — once on <input>, which always clips
+        // its own content, and once on a label span carrying a truncation
+        // utility. Neither looked like the other.
+        //
+        // This CANNOT be caught by measuring the text: a clipped label is cut at
+        // both ends, so it measures perfectly centred. Only the property tells
+        // the truth.
+        for (const el of document.querySelectorAll('*')) {
+          const cs = getComputedStyle(el)
+          if (cs.textBoxTrim === 'none') continue
+          if (cs.overflowX === 'visible' && cs.overflowY === 'visible') continue
+          bad.push((el.className || el.tagName) + ' — trimmed, but overflow is ' +
+            cs.overflowX + '/' + cs.overflowY + ', so its ascenders and descenders are cut')
+        }
+        return [...new Set(bad)]
+      })()`),
+  },
+
+  {
+    name: 'text in a control that cannot be trimmed is still balanced',
+    rule: 'Type — where you cannot trim, lift',
+    run: (page) =>
+      page.evaluate(`(() => {
+        const bad = []
+        // Asymmetry and height, never the pixel value of the correction: it is
+        // ((ascent - descent) - cap) / 2, which is font-dependent, and CI does
+        // not render with the author's fonts.
+        const TOLERANCE = 0.75
+        for (const el of document.querySelectorAll('input:not([type="checkbox"]):not([type="radio"])')) {
+          const cs = getComputedStyle(el)
+          const ctx = document.createElement('canvas').getContext('2d')
+          ctx.font = cs.fontWeight + ' ' + cs.fontSize + ' ' + cs.fontFamily
+          const m = ctx.measureText('Hg')
+          const r = el.getBoundingClientRect()
+          if (!r.height) continue
+          // Frame that does not move with the padding: inside the border.
+          const frameTop = r.top + parseFloat(cs.borderTopWidth)
+          const frameBottom = r.bottom - parseFloat(cs.borderBottomWidth)
+          const cTop = frameTop + parseFloat(cs.paddingTop)
+          const cBottom = frameBottom - parseFloat(cs.paddingBottom)
+          const fontBox = m.fontBoundingBoxAscent + m.fontBoundingBoxDescent
+          const baseline = cTop + ((cBottom - cTop) - fontBox) / 2 + m.fontBoundingBoxAscent
+          const above = baseline - m.actualBoundingBoxAscent - frameTop
+          const below = frameBottom - baseline
+          if (Math.abs(above - below) > TOLERANCE) {
+            bad.push((el.className || el.tagName) + ' — ' + above.toFixed(2) +
+              'px above the caps vs ' + below.toFixed(2) + 'px below the baseline')
+          }
+        }
+        return [...new Set(bad)]
+      })()`),
+  },
+
   {
     name: 'the scrollbar gutter is reserved',
     rule: 'Layout hints — scrollbar-gutter: stable',

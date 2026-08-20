@@ -164,6 +164,23 @@ body { transition: background var(--duration-base) var(--ease-out); }
   min-height: var(--control-height-md);
   padding: 0 var(--control-pad-x);
   font: inherit; font-size: var(--text-sm); line-height: 1;
+
+  /* An input clips its own content, so it must NOT be trimmed — the trim relies
+     on ascenders and descenders extending past the box, which is exactly what a
+     clipping box cuts. Where you cannot trim, lift: moving padding from one side
+     to the other repositions without resizing, so the glyphs never move relative
+     to what would clip them.
+
+     Measured on this control, above-cap vs below-baseline: 12.50/11.50 (+1.00)
+     uncorrected, 12.15/11.85 (+0.30) at 0.05em. Height is unchanged; the floor
+     holds it.
+
+     This is a CORRECTION, not a constant. The exact value is
+     ((ascent - descent) - cap) / 2, which depends on the font — and --font-sans
+     is a brand slot. Under a different face it lands near 0.3px out instead of
+     exact, against 1.00px doing nothing. CSS exposes cap, ex, ch, ic, lh and rlh
+     but neither ascent nor descent, so no calc() can express it. */
+  padding-bottom: 0.05em;
   color: var(--text-primary);
   background: var(--surface-base);
   border: var(--border-width) solid var(--border-strong);

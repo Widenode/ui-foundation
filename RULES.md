@@ -153,6 +153,14 @@ the leading of another undoes that, and generally looks wrong.
   both. The leading only decides how the label renders in a browser without
   `text-box`, and how untrimmed text behaves.
 
+  More generally: **when a rule does not fit a third-party control, the answer
+  is usually not to force it.** After adapting a whole component library, the
+  total override surface was three rules — a height floor, a `translate` on
+  label spans, and padding arithmetic on `<input>` — and only one depended on a
+  value from that library. Everything else was achieved by *not* applying
+  foundation rules to their controls. Forcing a rule that did not fit is what
+  caused damage, twice.
+
   So **do not apply it to a control you did not author.** A library that
   *derives* control height from leading rather than declaring it will collapse:
   Nuxt UI sizes with Tailwind `text-*` utilities carrying prose leading, and
@@ -181,6 +189,44 @@ the leading of another undoes that, and generally looks wrong.
   bare text node becomes inside a flex container, so **a label needs its own
   element**. Without browser support the label renders as it did before:
   imperfect rather than broken.
+
+  **Only trim a box with visible overflow.** **[enforced — `test:layout`]** The
+  trim works because ascenders and descenders extend past cap and baseline —
+  which is precisely what a clipping box cuts. An `<input>` always clips its own
+  content; a label carrying a truncation utility clips too.
+
+  Note the failure mode, because it is the reason this is a rule rather than a
+  judgement call: **a clipped label measures perfectly centred.** It is cut at
+  both ends, so every check asking "is this centred" returns yes. It cannot be
+  caught by inspecting the text's position — only by inspecting the property. A
+  passing gate and a screenshot are not enough here.
+
+  **Where you cannot trim, lift.** Trimming and lifting are different operations
+  and the distinction matters: the trim *shrinks the line box* while the ink
+  stays put, which is why it clips. Moving padding from one side to the other
+  *resizes nothing* — the content box and the clip region travel together, so
+  the glyphs never move relative to what would cut them. It cannot clip,
+  structurally.
+
+  Prefer `translate` on an inner label element where one exists: it lifts
+  without knowing the padding and without participating in layout, so height
+  cannot drift as a side effect. Padding arithmetic is the fallback for controls
+  with nothing inside to reach, like `<input>`.
+
+  Two constraints. **Only controls with a text label** — an icon-only control
+  has no cap box to lift onto, and lifting it just decentres the glyph. And it
+  is a **correction, not a constant**: the value is
+  `((ascent − descent) − cap) / 2`, which depends on the font, and `--font-sans`
+  is a brand slot. Gate the asymmetry and the resulting height, never the pixel
+  value, or CI's font metrics will fail the author's tuning.
+
+  *No CSS-only exact answer exists.* The correction needs the font's ascent and
+  descent; CSS exposes `cap`, `ex`, `ch`, `ic`, `lh` and `rlh` and neither of
+  those, so no `calc()` reaches it. An exact fix would mean measuring the font at
+  runtime and publishing a derived `--optical-shift`. That is a real option and
+  it is **declined here**: this package ships CSS with no runtime, and a token
+  that only exists once JavaScript has run is a different contract. The tuned em
+  value is the answer, with its inexactness recorded rather than hidden.
 
   **Trimming removes height, so whatever was leaning on that height must declare
   it.** **[enforced — `test:layout`]** Where the height came from matters:
@@ -247,6 +293,29 @@ Reach for the relationship token, not the raw `--space-*` value.
 **[enforced — `lint:css`]**, but only on `gap`, `row-gap`, `column-gap`,
 `margin-top` and `margin-bottom`. A raw `--space-*` in `padding` or a `margin`
 shorthand passes today. That is a gap in the check, not permission.
+
+---
+
+### The selection box is the font box
+
+**You can centre the font box or the cap box, not both.** They differ by about
+0.5px at 14px.
+
+The text-selection highlight paints the **font's** box, which is wildly
+asymmetric around the ink: the ascent must clear diacritics and lowercase
+ascenders while the descent only has to clear `g j p q y`. Measured at 14px —
+declared ascent 15px against a 10px cap height leaves 5px of slack above, while
+a 4px descent against a 3px descender leaves 1px below. Five to one.
+
+Neither `line-height` nor `text-box-trim` changes it. A label with
+`line-height: 12px` *and* the trim applied still paints a 16px inline box, and
+`::selection` styles colour only.
+
+So centre the **cap box** — it is what the eye reads — and accept that the
+highlight will then sit slightly high. **The measurement that answers "is this
+centred" is cap-top to baseline against the control's box, never the
+highlight.** A reviewer using the selection box as the yardstick is measuring
+the font's metrics, not your layout.
 
 ---
 

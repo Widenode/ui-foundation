@@ -16,8 +16,52 @@ import { test, expect } from '@playwright/test'
 
 const ROUTE = '/specimen/index.html'
 
+/**
+ * Icons are not always SVG. An icon *font* renders through a ::before on an
+ * otherwise empty element, so a gate that queries `svg` finds nothing in an app
+ * built on Font Awesome or Material Symbols — and passes, reporting confidence
+ * it has not earned. Detection is therefore structural: an element painting a
+ * pseudo-element glyph with no text of its own counts as an icon.
+ *
+ * Injected into the page rather than imported, so it is available inside
+ * page.evaluate.
+ */
+const ICON_HELPER = `
+  window.__icons = (root) => {
+    const svgs = [...root.querySelectorAll('svg')]
+    const glyphs = [...root.querySelectorAll('i, span, em')].filter((el) => {
+      if ((el.textContent || '').trim()) return false
+      if (el.querySelector('svg')) return false
+      const c = getComputedStyle(el, '::before').content
+      return c && c !== 'none' && c !== 'normal' && c !== '""'
+    })
+    return [...svgs, ...glyphs]
+  }
+
+  // The label beside an icon is a bare text node OR an element wrapping text.
+  // It became an element the moment text-box trimming required one, and a check
+  // that only looks for text nodes silently stops finding any pair at all.
+  window.__labelOf = (parent, icon) => {
+    for (const n of parent.childNodes) {
+      if (n === icon) continue
+      if (n.nodeType === Node.TEXT_NODE && n.textContent.trim()) {
+        const r = document.createRange()
+        r.selectNodeContents(n)
+        const rect = r.getBoundingClientRect()
+        r.detach()
+        return { rect, text: n.textContent.trim() }
+      }
+      if (n.nodeType === Node.ELEMENT_NODE && !n.contains(icon) && (n.textContent || '').trim()) {
+        return { rect: n.getBoundingClientRect(), text: n.textContent.trim() }
+      }
+    }
+    return null
+  }
+`
+
 test('table headers take the alignment of their column', async ({ page }) => {
   await page.goto(ROUTE)
+  await page.addScriptTag({ content: ICON_HELPER })
 
   const offenders = await page.evaluate(() => {
     const bad: string[] = []
@@ -56,6 +100,7 @@ test('table headers take the alignment of their column', async ({ page }) => {
 
 test('single-line controls do not inherit prose leading', async ({ page }) => {
   await page.goto(ROUTE)
+  await page.addScriptTag({ content: ICON_HELPER })
 
   const offenders = await page.evaluate(() => {
     // Real control elements plus the specimen's own control classes. textarea
@@ -97,19 +142,18 @@ test('single-line controls do not inherit prose leading', async ({ page }) => {
 
 test('icons paired with a label centre on the label', async ({ page }) => {
   await page.goto(ROUTE)
+  await page.addScriptTag({ content: ICON_HELPER })
 
   const offenders = await page.evaluate(() => {
     const bad: string[] = []
 
-    for (const icon of document.querySelectorAll<SVGElement>('svg')) {
+    for (const icon of (window as any).__icons(document) as HTMLElement[]) {
       const parent = icon.parentElement
       if (!parent) continue
 
       // Only pairs: an icon sitting beside actual text.
-      const textNode = [...parent.childNodes].find(
-        (n) => n.nodeType === Node.TEXT_NODE && n.textContent!.trim().length > 0,
-      )
-      if (!textNode) continue
+      const label = (window as any).__labelOf(parent, icon)
+      if (!label) continue
 
       const name = parent.className || parent.tagName.toLowerCase()
       const cs = getComputedStyle(parent)
@@ -139,10 +183,7 @@ test('icons paired with a label centre on the label', async ({ page }) => {
       // Backstop for gross errors only, measured against the LABEL rather than
       // the container: mis-aligning the icon grows the container, which moves
       // its centre too and cancels the error out.
-      const range = document.createRange()
-      range.selectNodeContents(textNode)
-      const t = range.getBoundingClientRect()
-      range.detach()
+      const t = label.rect
       if (!t.height) continue
 
       const i = icon.getBoundingClientRect()
@@ -159,6 +200,7 @@ test('icons paired with a label centre on the label', async ({ page }) => {
 
 test('the scrollbar gutter is reserved', async ({ page }) => {
   await page.goto(ROUTE)
+  await page.addScriptTag({ content: ICON_HELPER })
 
   // Without this, a centred layout jumps sideways the moment a page grows past
   // one viewport — so navigating between a short and a long page twitches.
@@ -171,6 +213,7 @@ test('the scrollbar gutter is reserved', async ({ page }) => {
 
 test('icons are sized from their label, not in pixels', async ({ page }) => {
   await page.goto(ROUTE)
+  await page.addScriptTag({ content: ICON_HELPER })
 
   const offenders = await page.evaluate(() => {
     // 1em is the rule. The window allows a deliberate nudge but rejects the
@@ -180,13 +223,11 @@ test('icons are sized from their label, not in pixels', async ({ page }) => {
     const MAX = 1.25
     const bad: string[] = []
 
-    for (const icon of document.querySelectorAll<SVGElement>('svg')) {
+    for (const icon of (window as any).__icons(document) as HTMLElement[]) {
       const parent = icon.parentElement
       if (!parent) continue
-      const hasLabel = [...parent.childNodes].some(
-        (n) => n.nodeType === Node.TEXT_NODE && n.textContent!.trim().length > 0,
-      )
-      if (!hasLabel) continue // icon-only controls are covered by the next test
+      // icon-only controls are covered by the next test
+      if (!(window as any).__labelOf(parent, icon)) continue
 
       const font = parseFloat(getComputedStyle(parent).fontSize)
       const size = icon.getBoundingClientRect().height
@@ -208,6 +249,7 @@ test('icons are sized from their label, not in pixels', async ({ page }) => {
 
 test('icon-only controls meet the minimum target size', async ({ page }) => {
   await page.goto(ROUTE)
+  await page.addScriptTag({ content: ICON_HELPER })
 
   const offenders = await page.evaluate(() => {
     // Their accessible name is not checked here — axe already reports a
@@ -218,7 +260,7 @@ test('icon-only controls meet the minimum target size', async ({ page }) => {
     const bad: string[] = []
 
     for (const el of document.querySelectorAll<HTMLElement>('button, a[href], [role="button"]')) {
-      const icon = el.querySelector('svg')
+      const icon = (window as any).__icons(el)[0]
       if (!icon) continue
       if (el.textContent && el.textContent.trim().length) continue // has a label
 
@@ -238,6 +280,7 @@ test('icon-only controls meet the minimum target size', async ({ page }) => {
 
 test('a field groups with its hint, not away from it', async ({ page }) => {
   await page.goto(ROUTE)
+  await page.addScriptTag({ content: ICON_HELPER })
 
   const offenders = await page.evaluate(() => {
     const bad: string[] = []
@@ -300,4 +343,114 @@ test('a field groups with its hint, not away from it', async ({ page }) => {
   })
 
   expect(offenders, 'fields whose hint is grouped wrongly or left unlinked').toEqual([])
+})
+
+test('labels beside an icon are trimmed cap-to-baseline', async ({ page }) => {
+  await page.goto(ROUTE)
+  await page.addScriptTag({ content: ICON_HELPER })
+
+  const offenders = await page.evaluate(() => {
+    const bad: string[] = []
+    if (!CSS.supports('text-box', 'trim-both cap alphabetic')) return bad // progressive
+
+    // Measure from the BASELINE, never from the label's own box: the box top
+    // means the cap edge when trimmed and the font edge when not, so a
+    // box-relative measurement compares different things in the two states and
+    // agrees with itself either way.
+    const baselineOf = (el: HTMLElement) => {
+      const probe = document.createElement('span')
+      probe.style.cssText = 'display:inline-block;width:0;height:0;vertical-align:baseline'
+      el.appendChild(probe)
+      const y = probe.getBoundingClientRect().top
+      probe.remove()
+      return y
+    }
+
+    // The FONT's cap height, never the word's own ink: measuring the word would
+    // demand "Queued" sit lower than "Passing" to balance its missing
+    // descender, enforcing the very inconsistency this rule prevents.
+    const capHeightOf = (el: HTMLElement) => {
+      const cs = getComputedStyle(el)
+      const ctx = document.createElement('canvas').getContext('2d')!
+      ctx.font = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`
+      return ctx.measureText('H').actualBoundingBoxAscent
+    }
+
+    for (const label of document.querySelectorAll<HTMLElement>('.btn__label, .badge__label')) {
+      const name = (label.textContent || '').trim().slice(0, 20)
+
+      // Declaration check. A regression to no trim measures around 1px and
+      // slips under any tolerance the geometry check can safely use.
+      const cs = getComputedStyle(label)
+      if (cs.textBoxTrim !== 'trim-both') {
+        bad.push(`"${name}" — text-box-trim is ${cs.textBoxTrim}, not trim-both`)
+        continue
+      }
+      if (!/cap/.test(cs.textBoxEdge) || !/alphabetic/.test(cs.textBoxEdge)) {
+        bad.push(`"${name}" — text-box-edge is ${cs.textBoxEdge}, not cap alphabetic`)
+        continue
+      }
+
+      // Geometry check, against the control that holds the label. Tolerance
+      // cannot go much tighter: CI renders with Linux font metrics, not the
+      // author's.
+      const control = label.parentElement
+      if (!control) continue
+      const cr = control.getBoundingClientRect()
+      const ccs = getComputedStyle(control)
+      const top = cr.top + parseFloat(ccs.borderTopWidth) + parseFloat(ccs.paddingTop)
+      const bottom = cr.bottom - parseFloat(ccs.borderBottomWidth) - parseFloat(ccs.paddingBottom)
+
+      const base = baselineOf(label)
+      const aboveCap = base - capHeightOf(label) - top
+      const belowBaseline = bottom - base
+
+      if (Math.abs(aboveCap - belowBaseline) > 1.5) {
+        bad.push(
+          `"${name}" — ${aboveCap.toFixed(1)}px above the caps vs ` +
+            `${belowBaseline.toFixed(1)}px below the baseline`,
+        )
+      }
+    }
+    return [...new Set(bad)]
+  })
+
+  expect(offenders, 'labels not trimmed cap-to-baseline').toEqual([])
+})
+
+test('a control with a trimmed label declares its own height', async ({ page }) => {
+  await page.goto(ROUTE)
+
+  const offenders = await page.evaluate(() => {
+    const bad: string[] = []
+    if (!CSS.supports('text-box', 'trim-both cap alphabetic')) return bad
+
+    // Trimming removes the leading a control may have been leaning on for
+    // height. Padding-driven controls are unaffected; anything sized by its
+    // label's line box collapses — measured, a button 16px -> 11.8px. So a
+    // trimmed label obliges its control to state a height rather than inherit
+    // one from text metrics that no longer exist.
+    for (const label of document.querySelectorAll<HTMLElement>('.btn__label, .badge__label')) {
+      if (getComputedStyle(label).textBoxTrim !== 'trim-both') continue
+      const control = label.parentElement
+      if (!control) continue
+
+      const cs = getComputedStyle(control)
+      const floored = cs.minHeight !== '0px' && cs.minHeight !== 'auto'
+      // Vertical padding is the other legitimate source.
+      const padded =
+        parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom) > 0
+
+      if (!floored && !padded) {
+        bad.push(
+          `${control.className || control.tagName} — trimmed label, but the ` +
+            `control has neither a min-height nor vertical padding, so its ` +
+            `height is whatever the trimmed line box happens to be`,
+        )
+      }
+    }
+    return [...new Set(bad)]
+  })
+
+  expect(offenders, 'controls whose height depends on a trimmed line box').toEqual([])
 })

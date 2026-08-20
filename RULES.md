@@ -144,8 +144,60 @@ the leading of another undoes that, and generally looks wrong.
 - **Single-line control labels use `line-height: 1`** — buttons, inputs, badges,
   chips, tabs. **[enforced — `test:layout`]** The leading scale is for prose. A
   control that inherits body leading gets a line box taller than its glyphs, so
-  it looks puffy and the label reads as badly centred even though the flex
-  centring is exact. Multi-line controls (textarea) keep their size's leading.
+  it looks puffy and the label reads as badly centred. Multi-line controls
+  (textarea) keep their size's leading.
+
+  **This rule is the fallback, not the mechanism.** Where `text-box` is
+  supported the trim below overrides it entirely: measured, a trimmed label is
+  identical at leading 1 and leading 1.6 — 0.31px asymmetry and a 7.7px box in
+  both. The leading only decides how the label renders in a browser without
+  `text-box`, and how untrimmed text behaves.
+
+  So **do not apply it to a control you did not author.** A library that
+  *derives* control height from leading rather than declaring it will collapse:
+  Nuxt UI sizes with Tailwind `text-*` utilities carrying prose leading, and
+  forcing `line-height: 1` measured out at 26px against our own
+  `--control-height-sm` of 32px — while fixing nothing, since asymmetry measured
+  1.60px before and after. Apply the trim there and skip the leading.
+- **Single-line text that shares a row with an icon, or sits in a fixed-height
+  box, is trimmed cap-to-baseline.** **[enforced — `test:layout`]**
+  `text-box: trim-both cap alphabetic`. This is the mechanism; the leading rule
+  above is its fallback. It works on any control, including one you did not
+  author — on Nuxt UI the trim alone took asymmetry from 1.60px to 0.00.
+
+  Scope is wider than "control label": buttons, badges, chips, tabs, menu items,
+  table cells, list rows, status lines. It does **not** reach an icon inside
+  running prose — `text-box-trim` affects only a block's first and last line
+  boxes, so it does nothing for a paragraph's interior. That case aligns on the
+  baseline instead.
+
+  Ascenders and descenders extend past the trimmed box by design. Trimming to
+  the ink instead makes the box shorter than the painted glyphs and the label
+  rides high. Cap-to-baseline is what keeps every label in a row at the same
+  height regardless of which letters it contains — and it lands a paired icon on
+  the capital beside it without any nudge.
+
+  **`text-box` needs a real block box.** It does nothing to the anonymous item a
+  bare text node becomes inside a flex container, so **a label needs its own
+  element**. Without browser support the label renders as it did before:
+  imperfect rather than broken.
+
+  **Trimming removes height, so whatever was leaning on that height must declare
+  it.** **[enforced — `test:layout`]** Where the height came from matters:
+
+  | Height comes from | Effect of trimming |
+  |---|---|
+  | Padding (inputs, textareas) | None — height-neutral |
+  | The label's line box (buttons, chips, badges) | Collapses |
+
+  Measured here: a button loses its floor and drops 16px to 11.8px, a badge
+  without an icon 21px to 17.7px, an input does not move. Ours survive by
+  design in one case and by luck in the other — `.btn` floors at
+  `--control-height-md`, while every badge in the specimen happens to contain an
+  icon taller than its label. A text-only badge beside an icon badge would not
+  match. So: **a control with a trimmed label declares its own height**, via
+  `--control-height-*` or an explicit floor. This package has no badge-height
+  token today; that is a gap, not a licence to leave it to the line box.
 
 ---
 
@@ -296,9 +348,21 @@ fine; one that does otherwise by accident is drift.
 - **An icon paired with a label centres on the label, never on the baseline.**
   **[enforced — `test:layout`]** The pair is a flex container with
   `align-items: center` and `--gap-tight` between, and the icon is
-  `display: block`. An inline SVG defaults to baseline alignment, which puts its
-  bottom edge on the baseline and leaves it riding visibly low. This applies
-  inside a control and outside one — anywhere an icon sits beside text.
+  `display: block`. This applies inside a control and outside one — anywhere an
+  icon sits beside text.
+
+  *Two different mechanisms land in the same place, and it is worth knowing
+  which you are debugging.* An **inline SVG** defaults to baseline alignment,
+  which puts its box bottom on the baseline and leaves it riding visibly low. An
+  **icon font** is the opposite case: the glyph already carries the correct
+  baseline relationship, drawn to the same cap height as the text, so it needs
+  no correction at all. Reasoning from the SVG model while debugging an icon
+  font will send you looking for an offset that should not exist — and no fixed
+  nudge can align an icon font anyway, because per-glyph ink varies across the
+  set (at a 100px em: check 75/7, warning 88/7, circle-x 88/13, clock 88/13).
+  Any constant is wrong for most of the set and the icons visibly jump between
+  adjacent controls. Alignment comes from the shared baseline, never from a
+  correction.
 - **Icons are sized in `em`, never in pixels.** **[enforced — `test:layout`]**
   An icon beside a label is `1em`, so it tracks that label through every size,
   theme and brand swap without anyone maintaining the relationship.
@@ -311,10 +375,25 @@ fine; one that does otherwise by accident is drift.
   **The caveat that bites: `1em` assumes artwork with optical padding inside its
   viewBox.** Measured across this package's own icons, the artwork fills between
   67% and 87% of the box — a check mark is inherently smaller than a warning
-  triangle. Sets are drawn so that varying fill still reads as even optical
-  weight, which is why **using one icon set is part of the rule**. Drop in a
-  glyph that bleeds to its viewBox edge and it will look oversized at exactly
-  the same `1em`, and no gate will tell you.
+  triangle. **Icon fonts are not bounded by that range and can exceed 100%:**
+  Font Awesome Pro 7.3.1 paints 1.085em against declared metrics of 0.971em, so
+  the glyph overflows the em box by ~5.7% on each side and renders 25–60% larger
+  than this package's own artwork at the same `1em`.
+
+  Sets are drawn so that varying fill still reads as even optical weight, which
+  is why **using one icon set is part of the rule**. Drop in a glyph that fills
+  its box differently — bleeding to the viewBox edge, or past it — and it will
+  look oversized at exactly the same `1em`, and no gate will tell you.
+
+  Two consequences follow. **The element box is not a proxy for an icon's visual
+  size**: under `line-height: 1` the box is exactly 1em while the ink may be
+  more, so a gap measured from that edge, or a test assertion about it, is
+  working with a smaller number than what is painted. The overflow is symmetric
+  and nothing clips, so this is a correctness note rather than a defect. And
+  **an icon font agreeing with `1em` is a property of that face, not a
+  guarantee** — Font Awesome's check happens to paint 9.00px of ink above the
+  baseline against a 9.00px cap height at 12px, which is why it reads as the
+  same size as the capital beside it.
 - **An icon-only control is a different thing and needs three answers.**
   It has no label to size against, and nothing for a screen reader to read.
   - Size the icon as a deliberate multiple of the control's own font-size —
@@ -330,6 +409,10 @@ fine; one that does otherwise by accident is drift.
   the moment content grows past one viewport, so moving between a short page and
   a long one makes the whole interface twitch. Provided by `base.css`.
 - **Truncate with a title attribute; never wrap in table cells.**
+- **A label that shares a row with an icon gets its own element**, never a bare
+  text node. `text-box` cannot trim an anonymous flex item, so the markup has to
+  give it something to trim. Same class of constraint as top-label pairing: it
+  looks like styling and it binds what a renderer emits.
 
 ---
 

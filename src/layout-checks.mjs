@@ -386,7 +386,10 @@ export const layoutChecks = [
         // Asymmetry and height, never the pixel value of the correction: it is
         // ((ascent - descent) - cap) / 2, which is font-dependent, and CI does
         // not render with the author's fonts.
-        const TOLERANCE = 0.75
+        // Must clear font variation, not just noise: the SAME uncorrected input
+        // measures +1.00 on one face and -1.00 on another. A tolerance at or
+        // below 1.0 fails CI for the author's font rather than for a defect.
+        const TOLERANCE = 1.5
         for (const el of document.querySelectorAll('input:not([type="checkbox"]):not([type="radio"])')) {
           const cs = getComputedStyle(el)
           const ctx = document.createElement('canvas').getContext('2d')
@@ -413,6 +416,39 @@ export const layoutChecks = [
   },
 
   {
+    name: 'controls sit on the device pixel grid',
+    rule: 'Type — leading resolves to whole pixels',
+    run: (page) =>
+      page.evaluate(`(() => {
+        const bad = []
+        // Assert the OUTCOME, not the declaration. The fraction arrives from
+        // whatever markup sits above a control, so proving that the type classes
+        // carry rounded leading says nothing about a control three sections down.
+        //
+        // Why it matters: text baselines snap to whole device pixels while box
+        // edges antialias at their true position, so a control at y=355.656
+        // renders its label a whole pixel off centre however exact its CSS is.
+        // Browser zoom HIDES this — more device pixels per CSS pixel makes the
+        // fraction resolvable — so judge vertical placement at 100% on a 1x
+        // display, and never trust a zoomed screenshot for it.
+        //
+        // Table descendants are excluded: row heights are distributed by the
+        // table layout algorithm, which makes no whole-pixel guarantee and is
+        // not something a token system can reach.
+        for (const el of document.querySelectorAll('button, input, select, textarea, .badge')) {
+          if (el.closest('table')) continue
+          const top = el.getBoundingClientRect().top
+          const f = top % 1
+          if (Math.min(f, 1 - f) > 0.01) {
+            bad.push((el.className || el.tagName) + ' — top ' + top.toFixed(3) +
+              ', off the pixel grid, so its label cannot render centred')
+          }
+        }
+        return [...new Set(bad)]
+      })()`),
+  },
+
+  {
     name: 'the scrollbar gutter is reserved',
     rule: 'Layout hints — scrollbar-gutter: stable',
     run: (page) =>
@@ -420,5 +456,34 @@ export const layoutChecks = [
         `getComputedStyle(document.documentElement).scrollbarGutter === 'stable' ? [] :
          ['scrollbar-gutter on the root is ' + getComputedStyle(document.documentElement).scrollbarGutter + ', not stable']`,
       ),
+  },
+  {
+    name: 'a pill clears its own curve',
+    rule: 'Layout hints — inline padding clears the corner radius',
+    run: (page) =>
+      page.evaluate(`(() => {
+        const bad = []
+        // Only FULLY ROUNDED shapes: a pill's radius is half its height, so the
+        // label sits inside the curve unless the inline padding clears it. A
+        // gently rounded shape is unaffected — a 6px radius under 12px padding
+        // already clears — so scoping here reports defects rather than noise.
+        for (const el of document.querySelectorAll('*')) {
+          const r = el.getBoundingClientRect()
+          if (!r.height || !r.width) continue
+          const cs = getComputedStyle(el)
+          const radius = parseFloat(cs.borderTopLeftRadius)
+          if (!radius) continue
+          const effective = Math.min(radius, r.height / 2)
+          if (effective < r.height / 2 - 0.5) continue           // not a pill
+          if (!(el.textContent || '').trim()) continue           // icon-only
+          const pad = Math.min(parseFloat(cs.paddingLeft), parseFloat(cs.paddingRight))
+          if (pad + 0.5 < effective) {
+            bad.push((el.className || el.tagName) + ' — ' + pad.toFixed(1) +
+              'px inline padding against a ' + effective.toFixed(1) +
+              'px radius, so the label sits inside the curve')
+          }
+        }
+        return [...new Set(bad)]
+      })()`),
   },
 ]

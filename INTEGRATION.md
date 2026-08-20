@@ -219,6 +219,42 @@ If stylelint cannot resolve that specifier, try the literal path
 `./node_modules/@widenode/ui-foundation/stylelint/index.json` before changing
 anything else.
 
+### Run the layout gates against your own app
+
+The rules RULES.md marks `[enforced]` are mostly things no linter can see —
+whether a header matches its column, whether an icon centres on its label,
+whether a hint sits closer to its control than the next field does. This package
+ships those assertions so they run against **your** routes, not just its
+specimen:
+
+```ts
+// tests/layout.spec.ts
+import { test, expect } from '@playwright/test'
+import { layoutChecks } from '@widenode/ui-foundation/layout-checks'
+
+const ROUTES = ['/', '/settings', '/orders/new']
+
+for (const check of layoutChecks) {
+  for (const route of ROUTES) {
+    test(`${check.name} — ${route}`, async ({ page }) => {
+      await page.goto(route)
+      expect(await check.run(page), check.name).toEqual([])
+    })
+  }
+}
+```
+
+Nine checks, each returning a list of human-readable offenders. They need
+nothing but a `page` with an `evaluate` method, so this adds no dependency —
+and the specimen runs the same module, so what you get is what CI here proves.
+
+**Add every route.** A check can only see what is rendered; an unlisted route is
+unchecked. This is the same trap as the specimen's — the gates were green for
+months against pages that did not exist yet.
+
+Icon detection is structural rather than `svg`-only, so it works with an icon
+font (Font Awesome, Material Symbols) as well as inline SVG.
+
 Text-level backstop, for `.vue` files:
 
 ```bash

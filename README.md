@@ -181,6 +181,21 @@ values and Tier 1 references inside template strings:
 node node_modules/@widenode/ui-foundation/scripts/check-tokens.mjs src
 ```
 
+## Layout gates for your app
+
+The `[enforced]` rules that no linter can see ship as runnable assertions, so
+they run against your routes rather than only this package's specimen:
+
+```js
+import { layoutChecks } from '@widenode/ui-foundation/layout-checks'
+```
+
+Nine checks — header alignment, control leading, icon centring and sizing,
+icon-only target size, field grouping, cap-to-baseline trimming and its height
+floor, scrollbar gutter. Each returns a list of offenders. The specimen runs the
+same module, and every check is verified to fail against its own defect.
+Wiring is in [`INTEGRATION.md`](INTEGRATION.md).
+
 ## Specimen
 
 [`specimen/index.html`](specimen/index.html) renders the whole system against

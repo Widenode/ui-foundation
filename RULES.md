@@ -144,20 +144,26 @@ the leading of another undoes that, and generally looks wrong.
 - **Single-line control labels use `line-height: 1`** — buttons, inputs, badges,
   chips, tabs. **[enforced — `test:layout`]** The leading scale is for prose. A
   control that inherits body leading gets a line box taller than its glyphs, so
-  it looks puffy and the label reads as badly centred even though the flex
-  centring is exact. Multi-line controls (textarea) keep their size's leading.
+  it looks puffy and the label reads as badly centred. Multi-line controls
+  (textarea) keep their size's leading.
 
-  *Caveat for third-party controls:* this governs controls you author. A library
-  that **derives** its control height from leading rather than declaring it will
-  shrink when you apply this — Nuxt UI sizes with Tailwind `text-*` utilities
-  carrying prose leading, and forcing `line-height: 1` measured out at 26px
-  against our own `--control-height-sm` of 32px. Check whether the height is
-  declared or derived first, and pair the leading with an explicit
-  `--control-height-*` if you apply it.
+  **This rule is the fallback, not the mechanism.** Where `text-box` is
+  supported the trim below overrides it entirely: measured, a trimmed label is
+  identical at leading 1 and leading 1.6 — 0.31px asymmetry and a 7.7px box in
+  both. The leading only decides how the label renders in a browser without
+  `text-box`, and how untrimmed text behaves.
+
+  So **do not apply it to a control you did not author.** A library that
+  *derives* control height from leading rather than declaring it will collapse:
+  Nuxt UI sizes with Tailwind `text-*` utilities carrying prose leading, and
+  forcing `line-height: 1` measured out at 26px against our own
+  `--control-height-sm` of 32px — while fixing nothing, since asymmetry measured
+  1.60px before and after. Apply the trim there and skip the leading.
 - **Single-line text that shares a row with an icon, or sits in a fixed-height
   box, is trimmed cap-to-baseline.** **[enforced — `test:layout`]**
-  `text-box: trim-both cap alphabetic`, on top of `line-height: 1` — the leading
-  rule fixes the box, this fixes where the glyphs sit in it.
+  `text-box: trim-both cap alphabetic`. This is the mechanism; the leading rule
+  above is its fallback. It works on any control, including one you did not
+  author — on Nuxt UI the trim alone took asymmetry from 1.60px to 0.00.
 
   Scope is wider than "control label": buttons, badges, chips, tabs, menu items,
   table cells, list rows, status lines. It does **not** reach an icon inside
@@ -175,6 +181,23 @@ the leading of another undoes that, and generally looks wrong.
   bare text node becomes inside a flex container, so **a label needs its own
   element**. Without browser support the label renders as it did before:
   imperfect rather than broken.
+
+  **Trimming removes height, so whatever was leaning on that height must declare
+  it.** **[enforced — `test:layout`]** Where the height came from matters:
+
+  | Height comes from | Effect of trimming |
+  |---|---|
+  | Padding (inputs, textareas) | None — height-neutral |
+  | The label's line box (buttons, chips, badges) | Collapses |
+
+  Measured here: a button loses its floor and drops 16px to 11.8px, a badge
+  without an icon 21px to 17.7px, an input does not move. Ours survive by
+  design in one case and by luck in the other — `.btn` floors at
+  `--control-height-md`, while every badge in the specimen happens to contain an
+  icon taller than its label. A text-only badge beside an icon badge would not
+  match. So: **a control with a trimmed label declares its own height**, via
+  `--control-height-*` or an explicit floor. This package has no badge-height
+  token today; that is a gap, not a licence to leave it to the line box.
 
 ---
 

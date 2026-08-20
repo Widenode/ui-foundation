@@ -417,3 +417,40 @@ test('labels beside an icon are trimmed cap-to-baseline', async ({ page }) => {
 
   expect(offenders, 'labels not trimmed cap-to-baseline').toEqual([])
 })
+
+test('a control with a trimmed label declares its own height', async ({ page }) => {
+  await page.goto(ROUTE)
+
+  const offenders = await page.evaluate(() => {
+    const bad: string[] = []
+    if (!CSS.supports('text-box', 'trim-both cap alphabetic')) return bad
+
+    // Trimming removes the leading a control may have been leaning on for
+    // height. Padding-driven controls are unaffected; anything sized by its
+    // label's line box collapses — measured, a button 16px -> 11.8px. So a
+    // trimmed label obliges its control to state a height rather than inherit
+    // one from text metrics that no longer exist.
+    for (const label of document.querySelectorAll<HTMLElement>('.btn__label, .badge__label')) {
+      if (getComputedStyle(label).textBoxTrim !== 'trim-both') continue
+      const control = label.parentElement
+      if (!control) continue
+
+      const cs = getComputedStyle(control)
+      const floored = cs.minHeight !== '0px' && cs.minHeight !== 'auto'
+      // Vertical padding is the other legitimate source.
+      const padded =
+        parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom) > 0
+
+      if (!floored && !padded) {
+        bad.push(
+          `${control.className || control.tagName} — trimmed label, but the ` +
+            `control has neither a min-height nor vertical padding, so its ` +
+            `height is whatever the trimmed line box happens to be`,
+        )
+      }
+    }
+    return [...new Set(bad)]
+  })
+
+  expect(offenders, 'controls whose height depends on a trimmed line box').toEqual([])
+})

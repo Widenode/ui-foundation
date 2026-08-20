@@ -33,13 +33,13 @@ admins too. What that enforces:
 | Rule | Effect |
 |---|---|
 | Pull request required | Nobody pushes to `main` directly, including maintainers |
-| `lint + a11y` and `visual regression` must pass | Strict — your branch must also be up to date |
+| `verify` must pass | The same command `prepack` runs, in the same image. Strict — your branch must also be up to date |
 | Conversations must be resolved | No merging over an open thread |
 | No force-push, no deletion | `main` history is append-only |
 
 There is **no required approval count** and **no CODEOWNERS file**, deliberately.
 On a package this size a mandatory second pair of eyes is usually a rubber
-stamp, whereas the gate suite genuinely cannot be talked round: four checks,
+stamp, whereas the gate suite genuinely cannot be talked round: five gates,
 none of them bypassable by anyone.
 
 Authorisation is write access, nothing more. CODEOWNERS was removed because it
@@ -60,12 +60,17 @@ npm run verify
 | `lint:tokens` | `scripts/check-tokens.mjs` — the text-level backstop. Catches arbitrary Tailwind values and Tier 1 references inside template strings, which an AST linter cannot see |
 | `test:a11y` | axe-core over the specimen in both themes: contrast, target size, ARIA, focus order |
 | `test:contrast` | `src/contrast-policy.json` asserted pair by pair, in both themes |
+| `test:layout` | The `[enforced]` rules no linter can see — header alignment, control leading, icon centring and sizing, target size, field grouping, cap-to-baseline trimming, pill padding, whole-pixel leading |
 | `test:visual` | Screenshot diff of the specimen at 390px and 1280px, both themes |
 
-CI runs all four on every pull request. `test:visual` runs as its own job,
-pinned to the Playwright image the baselines were generated in — same OS is not
-the same environment, and screenshot comparison is the one gate sensitive to
-font rendering.
+**CI runs `npm run verify` — the whole set — inside the same pinned Playwright
+image that `prepack` uses at release time.** That parity is deliberate and worth
+preserving: a green PR means the release will publish.
+
+It was not always so. The branch used to run a subset on a bare runner while
+`npm publish` ran the full suite in the container, and three consecutive release
+attempts failed on font-dependent assertions that had passed on the PR. Same
+command, same image, or you find out at tag time.
 
 ### The contrast policy
 

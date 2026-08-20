@@ -20,10 +20,14 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
-    # `npm publish` runs `prepack`, which runs the full `verify` — lint, a11y
-    # AND test:visual. Screenshot baselines are environment-specific, so this
-    # job pins the exact image the baselines must be generated in. Keep this tag
-    # in lockstep with the @playwright/test version in package.json.
+    # `npm publish` runs `prepack`, which runs the full `verify`. ci.yml runs
+    # that same command in this same image on every PR, deliberately: for three
+    # attempts at v0.4.0 the branch ran a different suite on a different runner,
+    # passed, and then failed here on font-dependent assertions. If those two
+    # ever diverge again, a green PR stops meaning a publishable commit.
+    #
+    # Keep this tag in lockstep with package.json, ci.yml and
+    # visual-baselines.yml.
     container: mcr.microsoft.com/playwright:v1.62.1-noble
 
     steps:

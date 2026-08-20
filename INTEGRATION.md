@@ -136,7 +136,88 @@ useHead({ htmlAttrs: { 'data-theme': () => mode.value } })
 
 The MutationObserver version works on Nuxt too, but only after hydration.
 
-### 3.3 What the adapter does and does not cover
+### 3.3 Scroll lock — the other thing that will bite you
+
+Same shape as the theme attribute above: two reasonable things that are wrong
+together, with no error anywhere.
+
+`base.css` sets `scrollbar-gutter: stable`, so the scrollbar's space is reserved
+permanently and **locking body scroll reclaims nothing**. Your overlay library
+does not know that. It measures `innerWidth - documentElement.clientWidth` and
+pads the body by the difference, because normally locking scroll removes the
+scrollbar and the page jumps. Under a stable gutter that padding is surplus, and
+every centred element shifts by half a scrollbar as the overlay opens.
+
+Measured at a 1024px viewport with a 15px scrollbar, opening a dialog: the
+`body` content box goes 1009 -> 994, and a centred `main` moves 159.5 -> 152.
+The header and the main column centre independently, so both slide — it reads as
+the whole page stepping 7.5px sideways and back. **Precisely the twitch
+`scrollbar-gutter` exists to prevent, reintroduced by the thing that compensates
+for its absence.**
+
+Turn the library's compensation off. It is ours now:
+
+```vue
+<UApp :scroll-body="false">          <!-- Nuxt UI -->
+<ConfigProvider :scroll-body="false"> <!-- Reka UI directly -->
+```
+
+**It will not show up in CI.** Headless Chromium uses overlay scrollbars, so
+`innerWidth - documentElement.clientWidth` is 0, the library never enters the
+padding branch, and a headless suite stays green on a page that is visibly
+broken in every real browser. Nothing turns that off:
+`--disable-features=OverlayScrollbar`, `--enable-features=CSSScrollbarGutter`,
+`--hide-scrollbars=false` and styling `::-webkit-scrollbar` were all tried. It reproduces immediately under `--headed`,
+and it was found by eye, by the person using the app.
+
+To gate it, stub the one value the library reads and leave layout, gutter and
+lock all real:
+
+```js
+// Runs before any page script, so the library sees a classic scrollbar.
+await page.addInitScript((width) => {
+  const real = Object.getOwnPropertyDescriptor(window, 'innerWidth')?.get?.bind(window)
+  Object.defineProperty(window, 'innerWidth', {
+    configurable: true,
+    get: () => (real ? real() : 0) + width,
+  })
+}, 15)
+
+await page.goto(route)
+
+// Assert the stub is LIVE before relying on it, or this passes on any
+// environment where it quietly stopped applying.
+expect(
+  await page.evaluate(() => window.innerWidth - document.documentElement.clientWidth),
+).toBe(15)
+
+const where = () => page.evaluate(() => ({
+  main: document.querySelector('main h1').getBoundingClientRect().x,
+  header: document.querySelector('.app-header__inner').getBoundingClientRect().x,
+}))
+
+const before = await where()
+await openTheOverlay(page)
+expect(await where()).toEqual(before)
+```
+
+Measure the header and the main column **separately**: they are centred
+independently, so a fix that moved only one would read as correct if you checked
+only the other.
+
+That guard is not ceremony. `innerWidth` is an own accessor on `window` in
+Chromium and `Window.prototype` carries none, so the tempting "correction" of
+reading the descriptor off the prototype throws inside the init script, installs
+nothing, and leaves the measurement at 0 — a green run proving nothing. The
+guard catches exactly that, and did.
+
+**This is a recipe rather than a shipped check, deliberately.** It needs
+`addInitScript`, which is driver-specific; `layoutChecks` requires nothing of
+`page` but `evaluate`, and a check that took only a page would run in headless,
+measure 0, and pass vacuously — which is the failure mode being documented, not
+a fix for it.
+
+### 3.4 What the adapter does and does not cover
 
 Mapped: every `--ui-*` background, text and border role, plus the six colour
 aliases. `--ui-border-accented` deliberately points at `--border-strong` so
@@ -150,7 +231,7 @@ and their 0.25rem default already yields our scale), `--ui-container` and
 defines**. Without the adapter they resolve to nothing rather than falling back
 to a default — a loud failure, which is the point.
 
-### 3.4 Vue + Vite specifics
+### 3.5 Vue + Vite specifics
 
 Nuxt UI's own setup, for reference — none of it is this package's concern
 beyond where the stylesheet goes:

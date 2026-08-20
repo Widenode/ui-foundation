@@ -595,6 +595,16 @@ fine; one that does otherwise by accident is drift.
   **[enforced — `test:layout`]** Otherwise a centred layout shifts horizontally
   the moment content grows past one viewport, so moving between a short page and
   a long one makes the whole interface twitch. Provided by `base.css`.
+
+  **The consequence a consumer cannot infer: reserving the gutter makes the
+  scrollbar's width a constant, so anything else compensating for the scrollbar
+  is now double-counting.** Every overlay library pads the body by
+  `innerWidth - documentElement.clientWidth` when it locks scroll, because
+  normally locking removes the scrollbar. Under a stable gutter nothing is
+  reclaimed and that padding shifts every centred element by half a scrollbar as
+  the overlay opens — the twitch this rule exists to prevent, reintroduced by
+  the fix for its absence. Turn the library's compensation off; see
+  `INTEGRATION.md` §3.3, which also covers why no headless gate sees it.
 - **Truncate with a title attribute; never wrap in table cells.**
 - **On a fully rounded shape, the content must clear the corner radius.**
   **[enforced — `test:layout`]** A pill's radius is half its height, so at the

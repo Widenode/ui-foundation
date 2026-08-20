@@ -134,6 +134,35 @@ Size, leading and tracking are authored as triplets. Leading tightens as size
 grows; tracking goes negative at display sizes. Mixing a size from one step with
 the leading of another undoes that, and generally looks wrong.
 
+- **Leading resolves to whole pixels.** **[enforced — `test:layout`]** The scale
+  is authored as ratios, and a ratio times a size is usually fractional — 1.6 x
+  16px is 25.6px. A fractional block height puts every element below it on a
+  fractional `y`, and **a control off the device pixel grid renders its label a
+  whole pixel off centre however exact its own CSS is**, because baselines snap
+  to the grid while box edges antialias at their true position. Round at the
+  point of use, ratio first so a browser without `round()` keeps today's
+  behaviour:
+
+  ```css
+  line-height: var(--leading-base);
+  line-height: round(calc(var(--leading-base) * 1em), 1px);
+  ```
+
+  `base.css` does this for `body`. Anywhere else you set leading, do the same.
+  Measured here, restoring ratio leading knocks 18 controls off the grid on the
+  specimen alone.
+
+  **This is invisible under browser zoom**, which is the trap: more device pixels
+  per CSS pixel makes the fraction resolvable, so it renders correctly at 125%
+  and above. That is exactly how anyone inspects fine typography — zoom in, or
+  screenshot at a scale factor. **Judge vertical placement at 100% on a 1x
+  display.** A zoomed screenshot proving a label is centred proves nothing about
+  what a reader sees, and this document's own optical measurements were taken at
+  4x before this was understood.
+
+  Tables are excluded from the check: row heights are distributed by the table
+  layout algorithm, which makes no whole-pixel guarantee and is not something a
+  token layer can reach.
 - Measure: `--measure` (68ch) for prose, `--measure-narrow` (46ch) for
   supporting copy in narrow columns. Prose running full width is hard to read at
   any size.
@@ -219,6 +248,22 @@ the leading of another undoes that, and generally looks wrong.
   `((ascent − descent) − cap) / 2`, which depends on the font, and `--font-sans`
   is a brand slot. Gate the asymmetry and the resulting height, never the pixel
   value, or CI's font metrics will fail the author's tuning.
+
+  **This package therefore ships no lift, and that is a deliberate reversal.**
+  One was added and removed: `padding-bottom: 0.05em` took the specimen's input
+  from +1.00 to +0.30 on one face, and from −1.00 to **−1.70** on another. The
+  sign of the error flips between fonts, so a fixed correction is not merely
+  inexact across a brand swap — it can be worse than doing nothing. Pin your
+  font and the technique is sound; ship it in a brand-agnostic layer and it is
+  not. It was caught by the release gate rather than by review, because CI
+  renders with different fonts than the author.
+
+  **A correction that cancels a half-pixel must not exceed that half — round it
+  down, never up.** At 14px the lift is 0.5px; writing it as `0.036em` gives
+  0.504px, four thousandths over, which puts the baseline at 20.996 and floors it
+  to 20 — a whole pixel the wrong way. `0.0357em` gives 21.0002 and floors
+  correctly. Overshooting by any amount at all moves the snapped baseline a full
+  pixel in the opposite direction.
 
   *No CSS-only exact answer exists.* The correction needs the font's ascent and
   descent; CSS exposes `cap`, `ex`, `ch`, `ic`, `lh` and `rlh` and neither of

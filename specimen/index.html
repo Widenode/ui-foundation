@@ -41,8 +41,8 @@ body { transition: background var(--duration-base) var(--ease-out); }
 
 .section__head { border-bottom: var(--border-width) solid var(--border-default); padding-bottom: var(--gap-related); margin-bottom: var(--gap-group); }
 .section__eyebrow { font-family: var(--font-mono); font-size: var(--text-2xs); letter-spacing: var(--tracking-2xs); text-transform: uppercase; color: var(--text-secondary); margin: 0 0 var(--space-2); }
-.section__title { font-family: var(--font-display); font-size: var(--text-2xl); line-height: var(--leading-2xl); letter-spacing: var(--tracking-2xl); font-weight: var(--weight-semibold); margin: 0; }
-.section__note { max-width: var(--measure); color: var(--text-secondary); font-size: var(--text-sm); line-height: var(--leading-sm); margin: var(--gap-related) 0 0; }
+.section__title { font-family: var(--font-display); font-size: var(--text-2xl); line-height: round(calc(var(--leading-2xl) * 1em), 1px); letter-spacing: var(--tracking-2xl); font-weight: var(--weight-semibold); margin: 0; }
+.section__note { max-width: var(--measure); color: var(--text-secondary); font-size: var(--text-sm); line-height: round(calc(var(--leading-sm) * 1em), 1px); margin: var(--gap-related) 0 0; }
 
 .block { margin-top: var(--gap-group); }
 .block__title { font-size: var(--text-sm); font-weight: var(--weight-semibold); margin: 0 0 var(--gap-related); }
@@ -56,7 +56,7 @@ body { transition: background var(--duration-base) var(--ease-out); }
 
 /* ---------- color ramp ---------- */
 .ramp { display: grid; grid-template-columns: repeat(12, 1fr); border: var(--border-width) solid var(--border-default); border-radius: var(--radius-md); overflow: hidden; }
-.ramp__cell { aspect-ratio: 1 / 1.35; display: flex; align-items: flex-end; justify-content: center; padding-bottom: var(--space-2); font-family: var(--font-mono); font-size: var(--text-2xs); }
+.ramp__cell { height: var(--space-16); display: flex; align-items: flex-end; justify-content: center; padding-bottom: var(--space-2); font-family: var(--font-mono); font-size: var(--text-2xs); }
 .ramp__legend { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: var(--gap-related); margin-top: var(--gap-related); font-size: var(--text-xs); color: var(--text-secondary); }
 .ramp__legend b { color: var(--text-primary); font-weight: var(--weight-medium); font-family: var(--font-mono); }
 
@@ -165,22 +165,12 @@ body { transition: background var(--duration-base) var(--ease-out); }
   padding: 0 var(--control-pad-x);
   font: inherit; font-size: var(--text-sm); line-height: 1;
 
-  /* An input clips its own content, so it must NOT be trimmed — the trim relies
-     on ascenders and descenders extending past the box, which is exactly what a
-     clipping box cuts. Where you cannot trim, lift: moving padding from one side
-     to the other repositions without resizing, so the glyphs never move relative
-     to what would clip them.
-
-     Measured on this control, above-cap vs below-baseline: 12.50/11.50 (+1.00)
-     uncorrected, 12.15/11.85 (+0.30) at 0.05em. Height is unchanged; the floor
-     holds it.
-
-     This is a CORRECTION, not a constant. The exact value is
-     ((ascent - descent) - cap) / 2, which depends on the font — and --font-sans
-     is a brand slot. Under a different face it lands near 0.3px out instead of
-     exact, against 1.00px doing nothing. CSS exposes cap, ex, ch, ic, lh and rlh
-     but neither ascent nor descent, so no calc() can express it. */
-  padding-bottom: 0.05em;
+  /* No optical lift here, deliberately. An input clips its own content so it
+     cannot be trimmed, and the padding correction that would centre it is
+     font-dependent — measured, 0.05em took this control from +1.00 to +0.30 on
+     one face and from -1.00 to -1.70 on another. The sign flips, so a fixed
+     value is worse than nothing for a package whose --font-sans is a brand slot.
+     The technique is documented in RULES.md for apps that pin their font. */
   color: var(--text-primary);
   background: var(--surface-base);
   border: var(--border-width) solid var(--border-strong);
@@ -192,7 +182,7 @@ body { transition: background var(--duration-base) var(--ease-out); }
 .input:hover:not([disabled]) { border-color: var(--text-secondary); }
 .input[disabled] { background: var(--surface-raised); color: var(--text-disabled); cursor: not-allowed; border-color: var(--border-default); }
 .input[aria-invalid="true"] { border-color: var(--status-bad-solid); }
-textarea.input { padding: var(--space-2) var(--control-pad-x); min-height: 84px; resize: vertical; line-height: var(--leading-sm); }
+textarea.input { padding: var(--space-2) var(--control-pad-x); min-height: 84px; resize: vertical; line-height: round(calc(var(--leading-sm) * 1em), 1px); }
 select.input { appearance: none; background-image: linear-gradient(45deg, transparent 50%, currentcolor 50%), linear-gradient(135deg, currentcolor 50%, transparent 50%); background-position: right 16px center, right 11px center; background-size: 5px 5px, 5px 5px; background-repeat: no-repeat; padding-right: var(--space-8); }
 
 /* ---------- panel / depth ---------- */

@@ -46,7 +46,16 @@ body {
   color: var(--text-primary);
   font-family: var(--font-sans);
   font-size: var(--text-base);
+
+  /* Ratio first as the fallback, then rounded. A ratio times a size is usually
+     fractional — 1.6 x 16px is 25.6px — and a fractional block height puts every
+     element below it on a fractional y. A control off the device pixel grid
+     renders its label a whole pixel off centre however exact its own CSS is,
+     because baselines snap to the grid while box edges antialias at their true
+     position. Browser zoom hides this: more device pixels per CSS pixel makes
+     the fraction resolvable, so it looks correct at 125% and wrong at 100%. */
   line-height: var(--leading-base);
+  line-height: round(calc(var(--leading-base) * 1em), 1px);
   -webkit-font-smoothing: antialiased;
 }
 
